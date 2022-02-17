@@ -15,7 +15,7 @@ class Player(pygame.sprite.Sprite):
         self.gravity = 0
         self.infinity_frames = 30
         self.was_hit = False
-        
+        self.speed = 14
         
     def update(window, character, character_rec):
         window.blit(character, character_rec)
@@ -44,11 +44,28 @@ class Enemy1_proj(pygame.sprite.Sprite):
         super().__init__()
         self.image =  pygame.image.load('dagger_projectile_left.png').convert_alpha()
         self.rect = self.image.get_rect(topleft = (x_position, 1000))
-        self.speed = 15
+        self.speed = 20
         self.shoot = False
         self.mask = pygame.mask.from_surface(self.image)   
         
-    
+class Enemy2(pygame.sprite.Sprite): 
+    def __init__(self):
+        super().__init__()
+        self.image = pygame.image.load('enemy2_flying_left.png').convert_alpha()
+        self.rect = self.image.get_rect(topleft = (1100, 100))
+        self.mask = pygame.mask.from_surface(self.image)
+        self.health = 3
+        self.was_hit = False
+        self.is_dead = False 
+
+class Enemy2_proj(pygame.sprite.Sprite):
+    def __init__(self, x_position):
+        super().__init__()
+        self.image =  pygame.image.load('e2_proj.png').convert_alpha()
+        self.rect = self.image.get_rect(topleft = (x_position, 200))
+        self.speed = 20
+        self.shoot = False
+        self.mask = pygame.mask.from_surface(self.image) 
 # Draw text into the game
 def draw_speech(screen, text, position_x, position_y, text_size, color):
     #
@@ -131,23 +148,29 @@ def draw_screen(window, background, grass, character_x, side_1_x, side_1_right, 
     window.blit(character, character_rec)
     window.blit(text, (800,0))
 def draw_forest(window, character, character_rec, night_background, night_grass, tree1, 
-enemy1, enemy1_rec):
+enemy1, enemy1_rec, enemy1_is_dead):
 
     window.blit(night_background, (0,0))
     window.blit(night_grass, (0,800))
     window.blit(tree1,(660, 340))
     window.blit(character, character_rec)
-    window.blit(enemy1, enemy1_rec)
+    if enemy1_is_dead == False:
+        window.blit(enemy1, enemy1_rec)
 
-def check_enemy1_range(character_x, stage_count):
+
+def check_enemy1_range(character_y, stage_count):
     
-    if character_x == 660 and stage_count == 1:
+    if character_y == 660 and stage_count == 1:
         # If character is in line with enemy1, shoot a projectile
         # at the character
         return True
     # Else do nothing
     return False
-    
+def check_enemy2_range(character_y, stage_count):
+    if character_y < 50 and character_y > -50 and stage_count == 1:
+        return True
+
+    return False
 def draw_enemy1_proj(window, enemy1_projectile_left, enemy1_proj_rec, enemy1_projectile_x,
 enemy1_projectile_speed):
     
@@ -158,6 +181,15 @@ enemy1_projectile_speed):
     window.blit(enemy1_projectile_left, enemy1_proj_rec)
     
     return enemy1_projectile_x
+def draw_enemy2_proj(window, enemy2_projectile_left, enemy2_proj_rec, enemy2_projectile_x, 
+                     enemy2_projectile_speed):
+    enemy2_proj_rec = enemy2_projectile_left.get_rect(topleft = (enemy2_projectile_x, 200))
+    enemy2_projectile_x -= enemy2_projectile_speed
+    if enemy2_projectile_x < -250:
+        enemy2_projectile_x = 1200
+    window.blit(enemy2_projectile_left, enemy2_proj_rec)
+    
+    return enemy2_projectile_x
 
 def show_enemy_hp(window, enemy_health, high_hp, medium_hp, low_hp):
     if enemy_health == 3:
@@ -166,6 +198,13 @@ def show_enemy_hp(window, enemy_health, high_hp, medium_hp, low_hp):
         window.blit(medium_hp, (1200, 600)) 
     elif enemy_health == 1:
         window.blit(low_hp, (1200, 600))
+def show_enemy2_hp(window, enemy_health, high_hp, low_hp):
+    if enemy_health == 2:
+        window.blit(high_hp, (1230, -50)) 
+    elif enemy_health == 1:
+        window.blit(low_hp, (1230, -50))
+    
+    
 # Main function of Wing It!
 def main():
     # Pygame Window
@@ -229,6 +268,13 @@ def main():
     enemy_medium_hp = pygame.image.load('healthbar_medium.png')
     enemy_low_hp = pygame.image.load('healthbar_low.png').convert_alpha()
     check_anim = True
+    
+    #Enemy 2:
+    enemy2 = Enemy2()
+    enemy2_projectile_x = 1100
+    enemy2_proj = Enemy2_proj(enemy2_projectile_x)
+
+    
     # False signifies that character is facing left, 
     # True signifies character is facing right
     check_position = False
@@ -249,8 +295,7 @@ def main():
     # And recieved the staff.
     got_staff = False
     
-   # Character movement speed 
-    character_speed = 12
+
     walk_count = 0
     fly_count = 0
     
@@ -275,9 +320,14 @@ def main():
                     text)
             
         elif stage_count == 1:
-            draw_forest(window,player.character, player.rect, night_background, night_grass, tree1, enemy1.image, enemy1.rect)
+            draw_forest(window,player.character, player.rect, night_background, night_grass, tree1, enemy1.image, enemy1.rect, enemy1.is_dead)
             
             show_enemy_hp(window, enemy1.health, enemy_high_hp, enemy_medium_hp, enemy_low_hp)
+            
+            show_enemy2_hp(window, enemy2.health, enemy_high_hp, enemy_low_hp)
+            if enemy2.is_dead == False:
+                window.blit(enemy2.image, enemy2.rect)
+
             
         if player.health == 3:
             window.blit(character_healthfull_sprite, (-210,-170))
@@ -296,8 +346,7 @@ def main():
 
         elif key_list[pygame.K_a] != 1 and key_list[pygame.K_d] != 1 and check_position == False and player.rect.y == 660:
             player.character = character_left
-            #main_char.character = character_left
-            
+   
         # WEAPON MECHANICS
         # Shoot weapon
         if key_list[pygame.K_f] == 1:
@@ -369,7 +418,7 @@ def main():
 
         # Movement Right
         if key_list[pygame.K_d] == 1:
-            player.rect.left += character_speed
+            player.rect.left += player.speed
 
             if player.rect.y != 660 and key_list[pygame.K_SPACE] == 1:
                 player.character = character_flying1_right
@@ -398,7 +447,7 @@ def main():
             player.rect = player.character.get_rect(topleft = (player.rect.x, player.rect.y))
         # Movement Left
         elif key_list[pygame.K_a] == 1:
-            player.rect.left -= character_speed
+            player.rect.left -= player.speed
             if player.rect.y != 660 and key_list[pygame.K_SPACE] == 1:
  
                 player.character = character_flying1_left
@@ -464,21 +513,36 @@ def main():
         if blit_weapon == True and got_staff == True:
             player_proj.rect = player_proj.image.get_rect(topleft = (weapon_x, weapon_y))
             window.blit(player_proj.image, player_proj.rect)
+            
             offset = (enemy1.rect.x - player_proj.rect.x), (enemy1.rect.y - player_proj.rect.y)
+            enemy2_offset = (enemy2.rect.x - player_proj.rect.x), (enemy2.rect.y - player_proj.rect.y)
             if player_proj.mask.overlap(enemy1.mask, (offset)) != None and stage_count == 1:
                 
                 if enemy1.was_hit == False:
                     enemy1.health -= 1
                     enemy1.was_hit = True
-                
+                    if enemy1.health == 0:
+                        enemy1.is_dead = True
             else:
                 enemy1.was_hit = False
                 
+            if player_proj.mask.overlap(enemy2.mask, enemy2_offset) != None:
+                if enemy2.was_hit == False:
+                    enemy2.health -= 1
+                    enemy2.was_hit = True
+                    if enemy2.health == 0:
+                        enemy2.is_dead = True 
+            else:
+                enemy2.was_hit = False
         shoot_enemy_weap = check_enemy1_range(player.rect.y, stage_count)
+        shoot_enemy2_weap = check_enemy2_range(player.rect.y, stage_count)
+        
         if shoot_enemy_weap == True:
             enemy1_proj.shoot = True
+        if shoot_enemy2_weap == True:
+            enemy2_proj.shoot = True
         # Shoot enemy weapon
-        if enemy1_proj.shoot == True:
+        if enemy1_proj.shoot == True and enemy1.is_dead == False:
             enemy1_proj.rect = enemy1_proj.image.get_rect(topleft = (enemy1_projectile_x, 1000))
 
             #player.rect = player.character.get_rect(topleft = (player.rect.x, player.rect.y))
@@ -489,7 +553,8 @@ def main():
             if player.mask.overlap(enemy1_proj.mask, (x_offset,0)) != None and player.rect.y == 660:
                 if player.was_hit == False:
                     player.health -= 1
-                    player.was_hit = True   
+                    player.was_hit = True 
+                      
             else:
                 player.was_hit = False      
             enemy1_projectile_x = draw_enemy1_proj(window, enemy1_proj.image, enemy1_proj.rect, enemy1_projectile_x, 
@@ -497,8 +562,22 @@ def main():
             enemy1_proj.rect = enemy1_proj.image.get_rect(topleft = (enemy1_projectile_x, 1000))
             if enemy1_projectile_x < -250:
                 enemy1_proj.shoot = False
-                
+        if enemy2_proj.shoot == True and enemy2.is_dead == False:
+
+            enemy2_proj.rect = enemy2_proj.image.get_rect(topleft = (enemy2_projectile_x, 200))  
+            e2_x_offset = player.rect.x - enemy2_proj.rect.x
+            e2_y_offset = player.rect.y - enemy2_proj.rect.y
+            if player.mask.overlap(enemy2_proj.mask, (e2_x_offset, e2_y_offset)) != None:
+                if player.was_hit == False:
+                    player.health -= 1
+                    player.was_hit = True
+            else:
+                player.was_hit = False 
             
+            enemy2_projectile_x = draw_enemy2_proj(window, enemy2_proj.image, enemy2_proj.rect, enemy2_projectile_x, enemy2_proj.speed)
+            enemy2_proj.rect = enemy2_proj.image.get_rect(topleft = (enemy2_projectile_x, 200))  
+            if enemy2_projectile_x < -250:
+                enemy2_proj.shoot = False
         pygame.display.update()  
         clock.tick(60)
  
