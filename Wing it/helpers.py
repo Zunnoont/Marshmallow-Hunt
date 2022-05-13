@@ -3,6 +3,17 @@ import pygame
 
 # Draw text into the game
 def draw_speech(screen, text, position_x, position_y, text_size, color):
+    '''
+    <Draws text onto to screen at a given position>
+
+    Arguments:
+        <screen>  - The pygame window
+        <text>  - A string containing a message
+        <position_x>  - x position of the text
+        <position_y>  - y position of the text
+        <text_size>  - Size of the test
+        <position_x>  - Color of the text
+    '''
     #
     font = pygame.font.Font('slkscr.ttf', text_size)
     text = font.render(text, True, color)
@@ -178,3 +189,75 @@ def display_health(window, character_healthfull_sprite, character_health2_hearts
         window.blit(character_health2_hearts_sprite, (-210, -170))
     elif health == 1:
         window.blit(character_Health1_heart_sprite, (-210, -170))
+
+def player_jump(player, key_list):
+    if player.check_anim is False:
+        if key_list[pygame.K_SPACE] == 1 and player.is_facing_right is True:
+            player.character = player.flying_right[0]
+            if player.fly_count > 1:
+                player.fly_count == 0
+
+            if player.fly_count < 2:
+                player.character = player.flying_right[math.floor(
+                            player.fly_count)]
+            else:
+                player.fly_count = 0
+            player.fly_count += 0.075
+        elif key_list[pygame.K_SPACE] == 1 and player.is_facing_right is False:
+            player.character = player.flying_left[0]
+            if (player.fly_count) > 1:
+                player.fly_count == 0
+            if player.fly_count < 2:
+                player.character = player.flying_left[math.floor(
+                    player.fly_count)]
+            else:
+                player.fly_count = 0
+            player.fly_count += 0.075
+        elif player.is_facing_right is False and key_list[pygame.K_SPACE] != 1:
+            player.character = player.flying_left[0]
+        elif player.is_facing_right is True and key_list[pygame.K_SPACE] != 1:
+            player.character = player.flying_right[0]
+        player.rect = player.character.get_rect(
+                    topleft=(player.rect.x, player.rect.y))
+    else:
+        if player.is_facing_right is False:
+            player.character = player.character_left
+        else:
+            player.character = player.character_right
+        player.rect = player.character.get_rect(
+            topleft=(player.rect.x, player.rect.y))
+
+        player.check_anim = False
+    player.rect = player.character.get_rect(
+        topleft=(player.rect.x, player.rect.y))
+    player.gravity += 1
+    return player
+
+def shoot_protagionst_weapon(player_proj, player):
+    if player.is_facing_right is False:
+        player_proj.direction = False
+    else:
+        player_proj.direction = True
+    player_proj.blit_weapon = True
+    weapon_x = player.rect.x
+    weapon_y = player.rect.y
+    if player.is_facing_right is False:
+        player_proj.image = player_proj.image_left
+    else:
+        player_proj.image = player_proj.image_right
+
+    player_proj.rect = player_proj.image.get_rect(
+        topleft=(weapon_x, weapon_y))
+    player_proj.speed = 20
+    return player_proj
+
+def check_for_slime_collission(player, enemy):
+    offset = (enemy.rect.x - player.rect.x), (enemy.rect.y - player.rect.y)
+    if player.mask.overlap(enemy.mask, offset) is not None:
+        if player.was_hit is False:
+            player.health -= 1
+            player.was_hit = True
+    else:
+        player.was_hit = False
+    return player
+
