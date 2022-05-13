@@ -1,6 +1,7 @@
 import math
 import pygame
 import helpers
+import data_store
 
 pygame.init()
 clock = pygame.time.Clock()
@@ -9,27 +10,116 @@ class Player(pygame.sprite.Sprite):
     def __init__(self, character, character_x, character_y):
         super().__init__()
         self.character = character
+        self.character_left = pygame.image.load(
+        'assets/character_standing_left.png').convert_alpha()
+        self.character_right = pygame.image.load(
+        'assets/characted_standing.png').convert_alpha()
+        self.got_item = pygame.image.load(
+                    'assets/obtained_staff.png').convert_alpha()
         self.rect = self.character.get_rect(topleft=(character_x, character_y))
         self.mask = pygame.mask.from_surface(self.character)
         self.health = 3
-        self.mask = pygame.mask.from_surface(self.character)
+        self.healthfull = pygame.image.load('assets/health_full.png')
+        self.health2_hearts = pygame.image.load('assets/health_2hearts.png')
+        self.health1_heart= pygame.image.load('assets/health_1heart.png')
         self.gravity = 0
         self.infinity_frames = 30
         self.was_hit = False
+        self.got_staff = False
+        self.check_anim = True
         self.speed = 14
+        self.walk_count = 0
+        self.fly_count = 0
+        self.is_facing_right = False
+        self.flying_right = [pygame.image.load('assets/flying_frame_character.png').convert_alpha(
+        ), pygame.image.load('assets/flying_frame2_right.png').convert_alpha()]
+        self.flying_left = [pygame.image.load('assets/flying_frame_character_left.png').convert_alpha(
+        ), pygame.image.load('assets/flying_frame2_left.png').convert_alpha()]
+        self.walk_cycle_right = [pygame.image.load(
+        'assets/walk_frame1.png'), pygame.image.load('assets/walking_frame2right.png')]
+        self.walk_cycle_left = [pygame.image.load(
+        'assets/walk_frame1_left.png'), pygame.image.load('assets/walking_frame2left.png')]
 
     def update(window, character, character_rec):
         window.blit(character, character_rec)
-#
+
+    def move_player_right(self, key_list):
+        self.rect.left += self.speed
+
+        if self.rect.y != 660 and key_list[pygame.K_SPACE] == 1:
+            self.character = self.flying_right[0]
+            if (self.fly_count) > 1:
+                self.fly_count == 0
+            if self.fly_count < 2:
+                self.character = self.flying_right[math.floor(
+                self.fly_count)]
+            else:
+                self.fly_count = 0
+            self.fly_count += 0.075
+            self.is_facing_right = True
+        elif self.rect.y != 660 and key_list[pygame.K_SPACE] != 1:
+            self.character = self.flying_right[0]
+            self.is_facing_right = True
+        else:
+            if (self.walk_count) > 1:
+                self.walk_count == 0
+            if self.walk_count < 2:
+                self.character = self.walk_cycle_right[math.floor(self.walk_count)]
+            else:
+                self.walk_count = 0
+            self.walk_count += 0.1
+
+            self.is_facing_right = True
+
+        self.rect = self.character.get_rect(
+            topleft=(self.rect.x, self.rect.y))
+
+    def move_player_left(self, key_list):
+        self.rect.left -= self.speed
+        if self.rect.y != 660 and key_list[pygame.K_SPACE] == 1:
+
+            self.character = self.flying_left[0]
+            if (self.fly_count) > 1:
+                self.fly_count == 0
+            if self.fly_count < 2:
+                self.character = self.flying_left[math.floor(
+                self.fly_count)]
+            else:
+                self.fly_count = 0
+            self.fly_count += 0.075
+            self.is_facing_right = False
+        elif self.rect.y != 660 and key_list[pygame.K_SPACE] != 1:
+            self.character = self.flying_left[0]
+            self.is_facing_right = False
+        else:
+            if (self.walk_count) > 1:
+                self.walk_count == 0
+            if self.walk_count < 2:
+                self.character = self.walk_cycle_left[math.floor(self.walk_count)]
+            else:
+                self.walk_count = 0
+            self.walk_count += 0.1
+
+            self.is_facing_right = False
+        self.rect = self.character.get_rect(
+            topleft=(self.rect.x, self.rect.y))
+
+
+
 
 class Player_proj(pygame.sprite.Sprite):
     def __init__(self, image, x, y):
         super().__init__()
         self.image = image
+        self.image_left = pygame.image.load(
+                    'assets/particle_effect_left.png').convert_alpha()
+        self.image_right = pygame.image.load(
+                    'assets/particle_effect.png').convert_alpha()
         self.rect = self.image.get_rect(topleft=(x, y))
         self.speed = 20
         self.direction = False
         self.mask = pygame.mask.from_surface(self.image)
+        self.blit_weapon = False
 
 
 class Enemy1(pygame.sprite.Sprite):
@@ -86,8 +176,132 @@ class Enemy3(pygame.sprite.Sprite):
         self.rect = self.image.get_rect(topleft=(x_position, 555))
         self.speed = 20
         self.falling = False
+        self.is_offscreen = False
         self.mask = pygame.mask.from_surface(self.image)
 
+    def move_jumping_slime(self):
+        self.rect.x -= 10
+        if self.rect.y == 555 and self.falling is False:
+            self.rect.y -= 10
+        if self.rect.y != 555 and self.falling is False:
+            self.rect.y -= 10
+            self.image = self.jumping_image
+        elif self.rect.y != 555 and self.falling is True:
+            self.rect.y += 10
+            self.image = self.standing
+        if self.rect.y == 255:
+            self.falling = True
+        elif self.rect.y == 555:
+            self.falling = False
+            self.image = self.standing
+
+        if self.rect.x < -200:
+            self.is_offscreen = True
+
+        self.rect = self.image.get_rect(topleft= (self.rect.x, self.rect.y))
+
+
+class Enemy4(pygame.sprite.Sprite):
+    def __init__(self, x_position):
+        super().__init__()
+        self.image = pygame.image.load('assets/green_slime_idle.png').convert_alpha()
+        self.jumping_image = pygame.image.load(
+            'assets/green_slime_jump.png').convert_alpha()
+        self.standing = pygame.image.load('assets/green_slime_idle.png').convert_alpha()
+        self.rect = self.image.get_rect(topleft=(x_position, 555))
+        self.speed = 23
+        self.falling = False
+        self.is_offscreen = False
+        self.mask = pygame.mask.from_surface(self.image)
+
+    def move_jumping_slime_green(self):
+        self.rect.x -= 15
+        if self.rect.y == 555 and self.falling is False:
+            self.rect.y -= 15
+        if self.rect.y != 555 and self.falling is False:
+            self.rect.y -= 15
+            self.image = self.jumping_image
+        elif self.rect.y != 555 and self.falling is True:
+            self.rect.y += 15
+            self.image = self.standing
+        if self.rect.y == 255:
+            self.falling = True
+        elif self.rect.y == 555:
+            self.falling = False
+            self.image = self.standing
+
+        if self.rect.x < -200:
+            self.is_offscreen = True
+
+        self.rect = self.image.get_rect(topleft= (self.rect.x, self.rect.y))
+
+class Enemy5(pygame.sprite.Sprite):
+    def __init__(self, x_position):
+        super().__init__()
+        self.image = pygame.image.load('assets/red_slime_idle.png').convert_alpha()
+        self.jumping_image = pygame.image.load(
+            'assets/red_slime_jump.png').convert_alpha()
+        self.standing = pygame.image.load('assets/red_slime_idle.png').convert_alpha()
+        self.rect = self.image.get_rect(topleft=(x_position, 555))
+        self.speed = 20
+        self.falling = False
+        self.is_offscreen = False
+        self.mask = pygame.mask.from_surface(self.image)
+
+    def move_jumping_slime_red(self):
+        self.rect.x -= 20
+        if self.rect.y == 555 and self.falling is False:
+            self.rect.y -= 20
+        if self.rect.y != 555 and self.falling is False:
+            self.rect.y -= 20
+            self.image = self.jumping_image
+        elif self.rect.y != 555 and self.falling is True:
+            self.rect.y += 20
+            self.image = self.standing
+        if self.rect.y == 255:
+            self.falling = True
+        elif self.rect.y == 555:
+            self.falling = False
+            self.image = self.standing
+
+        if self.rect.x < -200:
+            self.is_offscreen = True
+
+        self.rect = self.image.get_rect(topleft= (self.rect.x, self.rect.y))
+
+class Large_slime(pygame.sprite.Sprite):
+    def __init__(self, x_position):
+        super().__init__()
+        self.image = pygame.image.load('assets/large_slime_idle.png').convert_alpha()
+        self.jumping_image = pygame.image.load(
+            'assets/large_slime.png').convert_alpha()
+        self.standing = pygame.image.load('assets/large_slime_idle.png').convert_alpha()
+        self.rect = self.image.get_rect(topleft=(x_position, 255))
+        self.speed = 20
+        self.falling = False
+        self.is_offscreen = False
+        self.mask = pygame.mask.from_surface(self.image)
+
+    def move_jumping_slime_purple(self):
+        self.rect.x -= 20
+        if self.rect.y == 555 and self.falling is False:
+            self.rect.y -= 5
+        if self.rect.y != 555 and self.falling is False:
+            self.rect.y -= 5
+            self.image = self.jumping_image
+        elif self.rect.y != 555 and self.falling is True:
+            self.rect.y += 5
+            self.image = self.standing
+        if self.rect.y == 255:
+            self.falling = True
+        elif self.rect.y == 555:
+            self.falling = False
+            self.image = self.standing
+
+        if self.rect.x < -200:
+            self.is_offscreen = True
+
+        self.rect = self.image.get_rect(topleft= (self.rect.x, self.rect.y))
 
 # Main function of Wing It!
 def main():
@@ -102,29 +316,7 @@ def main():
 
     # Character Sprites
     character = pygame.image.load('assets/characted_standing.png').convert_alpha()
-    character_left = pygame.image.load(
-        'assets/character_standing_left.png').convert_alpha()
-    character_right = pygame.image.load(
-        'assets/characted_standing.png').convert_alpha()
-    character_got_item = pygame.image.load(
-                    'assets/obtained_staff.png').convert_alpha()
-
     player = Player(character, x_position, y_position)
-
-    # Character Health
-    character_healthfull_sprite = pygame.image.load('assets/health_full.png')
-    character_health2_hearts_sprite = pygame.image.load('assets/health_2hearts.png')
-    character_Health1_heart_sprite = pygame.image.load('assets/health_1heart.png')
-
-    # Flight sprites
-    character_flying1_right = pygame.image.load(
-        'assets/flying_frame_character.png').convert_alpha()
-    character_flying1_left = pygame.image.load(
-        'assets/flying_frame_character_left.png').convert_alpha()
-    character_flying_right = [pygame.image.load('assets/flying_frame_character.png').convert_alpha(
-    ), pygame.image.load('assets/flying_frame2_right.png').convert_alpha()]
-    character_flying_left = [pygame.image.load('assets/flying_frame_character_left.png').convert_alpha(
-    ), pygame.image.load('assets/flying_frame2_left.png').convert_alpha()]
 
     # Backgrounds
     grass = pygame.image.load('assets/resize_background_2.png').convert()
@@ -132,12 +324,6 @@ def main():
     night_background = pygame.image.load('assets/night_sky_starry.png').convert()
     night_grass = pygame.image.load('assets/night_grass_updated.png').convert()
     tree1 = pygame.image.load('assets/tree1.png').convert_alpha()
-
-    # Array of walking right frames
-    walking_right = [pygame.image.load(
-        'assets/walk_frame1.png'), pygame.image.load('assets/walking_frame2right.png')]
-    walking_left = [pygame.image.load(
-        'assets/walk_frame1_left.png'), pygame.image.load('assets/walking_frame2left.png')]
 
     # Game fonts
     font = pygame.font.Font('slkscr.ttf', 50)
@@ -156,23 +342,23 @@ def main():
     # Enemy 1's projectile
     enemy1_proj = Enemy1_proj(enemy1_projectile_x)
 
-    enemy_full_hp = pygame.image.load('assets/healthbar_full.png')
     enemy_high_hp = pygame.image.load('assets/healthbar_high.png')
     enemy_medium_hp = pygame.image.load('assets/healthbar_medium.png')
     enemy_low_hp = pygame.image.load('assets/healthbar_low.png').convert_alpha()
-    check_anim = True
-
     # Enemy 2:
     enemy2 = Enemy2()
     enemy2_projectile_x = 1100
     enemy2_proj = Enemy2_proj(enemy2_projectile_x)
 
-    # Enemy 3:
+    # Enemy 3-5: Slimes:
     enemy3 = Enemy3(1040)
+    enemy4 = Enemy4(1040)
+    enemy5 = Enemy5(1040)
 
-    # False signifies that character is facing left,
-    # True signifies character is facing right
-    check_position = False
+    # Large slime miniboss
+
+    large_slime = Large_slime(1200)
+
 
     # weapon_particle
     weapon = pygame.image.load('assets/particle_effect.png').convert_alpha()
@@ -184,21 +370,15 @@ def main():
     run_program = True
     isabel_interaction = 0
 
-    blit_weapon = False
-    # Check if character has talked with Isabel
-    # And recieved the staff.
-    got_staff = False
+    stage_count = 2
 
-    walk_count = 0
-    fly_count = 0
-
-    stage_count = 0
     # Program game loop
     while run_program is True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 exit()
+        # Change stage
         if player.rect.x > 1920:
             stage_count += 1
             player.rect.x = -200
@@ -222,56 +402,56 @@ def main():
             if enemy2.is_dead is False:
                 window.blit(enemy2.image, enemy2.rect)
         elif stage_count == 2:
+            player.rect = player.character.get_rect(
+                topleft=(player.rect.x, player.rect.y))
             helpers.draw_forest2(window, player.character, player.rect,
                          night_background, night_grass, tree1)
-            window.blit(enemy3.image, enemy3.rect)
+            if enemy3.is_offscreen is False:
+                window.blit(enemy3.image, enemy3.rect)
+                enemy3.move_jumping_slime()
+                player = helpers.check_for_slime_collission(player, enemy3)
+            elif enemy3.is_offscreen is True and enemy4.is_offscreen is False:
+                window.blit(enemy4.image, enemy4.rect)
+                enemy4.move_jumping_slime_green()
+                player = helpers.check_for_slime_collission(player, enemy4)
+            elif enemy4.is_offscreen is True and enemy5.is_offscreen is False:
+                window.blit(enemy5.image, enemy5.rect)
+                enemy5.move_jumping_slime_red()
+                player = helpers.check_for_slime_collission(player, enemy5)
+            elif enemy5.is_offscreen is True:
+                window.blit(large_slime.image, large_slime.rect)
+                large_slime.move_jumping_slime_purple()
+                player = helpers.check_for_slime_collission(player, large_slime)
 
-            enemy3.rect.x -= 10
-            if enemy3.rect.y == 555 and enemy3.falling is False:
-                enemy3.rect.y -= 10
-            if enemy3.rect.y != 555 and enemy3.falling is False:
-                enemy3.rect.y -= 10
-                enemy3.image = enemy3.jumping_image
-            elif enemy3.rect.y != 555 and enemy3.falling is True:
-                enemy3.rect.y += 10
-                enemy3.image = enemy3.standing
-
-            if enemy3.rect.y == 255:
-                enemy3.falling = True
-            elif enemy3.rect.y == 555:
-                enemy3.falling = False
-                enemy3.image = enemy3.standing
-
-        helpers.display_health(window, character_healthfull_sprite, character_health2_hearts_sprite,
-                   character_Health1_heart_sprite, player.health)
+        helpers.display_health(window, player.healthfull, player.health2_hearts,
+                   player.health1_heart, player.health)
 
         key_list = pygame.key.get_pressed()
 
         if key_list[pygame.K_SPACE] == 1:
             player.gravity = -20
-        # Check idle position of character
-        if key_list[pygame.K_a] != 1 and key_list[pygame.K_d] != 1 and check_position is True and player.rect.y == 660:
-            player.character = character_right
 
-        elif key_list[pygame.K_a] != 1 and key_list[pygame.K_d] != 1 and check_position is False and player.rect.y == 660:
-            player.character = character_left
+        # Check idle position of character
+        if key_list[pygame.K_a] != 1 and key_list[pygame.K_d] != 1 and player.is_facing_right is True and player.rect.y == 660:
+            player.character = player.character_right
+
+        elif key_list[pygame.K_a] != 1 and key_list[pygame.K_d] != 1 and player.is_facing_right is False and player.rect.y == 660:
+            player.character = player.character_left
 
         # WEAPON MECHANICS
         # Shoot weapon
         if key_list[pygame.K_f] == 1:
-            if check_position is False:
+            if player.is_facing_right is False:
                 player_proj.direction = False
             else:
                 player_proj.direction = True
-            blit_weapon = True
+            player_proj.blit_weapon = True
             weapon_x = player.rect.x
             weapon_y = player.rect.y
-            if check_position is False:
-                player_proj.image = pygame.image.load(
-                    'assets/particle_effect_left.png').convert_alpha()
+            if player.is_facing_right is False:
+                player_proj.image = player_proj.image_left
             else:
-                player_proj.image = pygame.image.load(
-                    'assets/particle_effect.png').convert_alpha()
+                player_proj.image = player_proj.image_right
 
             player_proj.rect = player_proj.image.get_rect(
                 topleft=(weapon_x, weapon_y))
@@ -284,118 +464,23 @@ def main():
            # if main_char
             player.rect.y = 660
 
-            if check_position is False and key_list[pygame.K_a] != 1 and key_list[pygame.K_d] != 1:
-                player.character = character_left
-            elif check_position is True and key_list[pygame.K_a] != 1 and key_list[pygame.K_d] != 1:
-                player.character = character_right
+            if player.is_facing_right is False and key_list[pygame.K_a] != 1 and key_list[pygame.K_d] != 1:
+                player.character = player.character_left
+            elif player.is_facing_right is True and key_list[pygame.K_a] != 1 and key_list[pygame.K_d] != 1:
+                player.character = player.character_right
             player.rect = player.character.get_rect(
                 topleft=(player.rect.x, player.rect.y))
 
         # Jumping Mechanic
         if player.rect.y != 660:
-            if check_anim is False:
-                if key_list[pygame.K_SPACE] == 1 and check_position is True:
-                    player.character = character_flying1_right
-                    if (fly_count) > 1:
-                        fly_count == 0
-
-                    if fly_count < 2:
-                        player.character = character_flying_right[math.floor(
-                            fly_count)]
-                    else:
-                        fly_count = 0
-                    fly_count += 0.075
-                elif key_list[pygame.K_SPACE] == 1 and check_position is False:
-                    player.character = character_flying1_left
-                    if (fly_count) > 1:
-                        fly_count == 0
-                    if fly_count < 2:
-                        player.character = character_flying_left[math.floor(
-                            fly_count)]
-                    else:
-                        fly_count = 0
-                    fly_count += 0.075
-                elif check_position is False and key_list[pygame.K_SPACE] != 1:
-                    player.character = character_flying1_left
-                elif check_position is True and key_list[pygame.K_SPACE] != 1:
-                    player.character = character_flying1_right
-                player.rect = character.get_rect(
-                    topleft=(player.rect.x, player.rect.y))
-            else:
-                if check_position is False:
-                    player.character = character_left
-                else:
-                    player.character = character_right
-                player.rect = player.character.get_rect(
-                    topleft=(player.rect.x, player.rect.y))
-
-                check_anim = False
-            player.rect = player.character.get_rect(
-                topleft=(player.rect.x, player.rect.y))
-            player.gravity += 1
+            helpers.player_jump(player, key_list)
 
         # Movement Right
         if key_list[pygame.K_d] == 1:
-            player.rect.left += player.speed
-
-            if player.rect.y != 660 and key_list[pygame.K_SPACE] == 1:
-                player.character = character_flying1_right
-                if (fly_count) > 1:
-                    fly_count == 0
-                if fly_count < 2:
-                    player.character = character_flying_right[math.floor(
-                        fly_count)]
-                else:
-                    fly_count = 0
-                fly_count += 0.075
-                check_position = True
-            elif player.rect.y != 660 and key_list[pygame.K_SPACE] != 1:
-                player.character = character_flying1_right
-                check_position = True
-            else:
-                if (walk_count) > 1:
-                    walk_count == 0
-                if walk_count < 2:
-                    player.character = walking_right[math.floor(walk_count)]
-                else:
-                    walk_count = 0
-                walk_count += 0.1
-
-                check_position = True
-
-            player.rect = player.character.get_rect(
-                topleft=(player.rect.x, player.rect.y))
+            player.move_player_right(key_list)
         # Movement Left
         elif key_list[pygame.K_a] == 1:
-            player.rect.left -= player.speed
-            if player.rect.y != 660 and key_list[pygame.K_SPACE] == 1:
-
-                player.character = character_flying1_left
-                if (fly_count) > 1:
-                    fly_count == 0
-                if fly_count < 2:
-                    player.character = character_flying_left[math.floor(
-                        fly_count)]
-                else:
-                    fly_count = 0
-                fly_count += 0.075
-                check_position = False
-            elif player.rect.y != 660 and key_list[pygame.K_SPACE] != 1:
-                player.character = character_flying1_left
-                check_position = False
-            else:
-
-                if (walk_count) > 1:
-                    walk_count == 0
-                if walk_count < 2:
-                    player.character = walking_left[math.floor(walk_count)]
-                else:
-                    walk_count = 0
-                walk_count += 0.1
-
-                check_position = False
-            player.rect = player.character.get_rect(
-                topleft=(player.rect.x, player.rect.y))
+            player.move_player_left(key_list)
 
         isabel_proximity = helpers.calculate_isabel_proximity(player.rect.x, player.rect.y,
                                                       side_1_rec.x, side_1_rec.y)
@@ -409,14 +494,14 @@ def main():
             if isabel_interaction in range(1300, 1400):
                 # Character has gotten the staff
                 # and can now use it
-                got_staff = True
-                player.character = character_got_item
+                player.got_staff = True
+                player.character = player.got_item
                 player.rect = player.character.get_rect(
                     topleft=(player.rect.x, player.rect.y))
 
             elif isabel_interaction in range(1400, 1500):
-                player.character = character_right
-                player.rect = character.get_rect(
+                player.character = player.character_right
+                player.rect = player.character.get_rect(
                     topleft=(player.rect.x, player.rect.y))
             speech = helpers.get_speech()
 
@@ -435,7 +520,7 @@ def main():
             isabel_interaction = 0
 
         # Shoot weapon
-        if blit_weapon is True and got_staff is True:
+        if player_proj.blit_weapon is True and player.got_staff is True:
             player_proj.rect = player_proj.image.get_rect(
                 topleft=(weapon_x, weapon_y))
             window.blit(player_proj.image, player_proj.rect)
@@ -469,12 +554,11 @@ def main():
             enemy1_proj.shoot = True
         if shoot_enemy2_weap is True:
             enemy2_proj.shoot = True
+
         # Shoot enemy weapon
         if enemy1_proj.shoot is True and enemy1.is_dead is False and stage_count == 1:
             enemy1_proj.rect = enemy1_proj.image.get_rect(
                 topleft=(enemy1_projectile_x, 1000))
-
-            #player.rect = player.character.get_rect(topleft = (player.rect.x, player.rect.y))
 
             x_offset = player.rect[0] - enemy1_proj.rect[0]
             if player.mask.overlap(enemy1_proj.mask, (x_offset, 0)) != None and player.rect.y == 660:
