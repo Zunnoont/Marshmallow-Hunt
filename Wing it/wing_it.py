@@ -28,6 +28,14 @@ class Player(pygame.sprite.Sprite):
                                  pygame.image.load('assets/4hp_3_hearts.png').convert_alpha(),
                                  pygame.image.load('assets/4hp_2_hearts.png').convert_alpha(),
                                  pygame.image.load('assets/4hp_1_heart.png').convert_alpha()]
+        self.idle_sprites_right = [pygame.image.load(
+        'assets/characted_standing.png').convert_alpha(),
+                                   pygame.image.load('assets/idle_frame2_right.png').convert_alpha(),
+                                   pygame.image.load('assets/idle_frame3_right.png').convert_alpha()]
+        self.idle_sprites_left = [pygame.image.load(
+        'assets/character_standing_left.png').convert_alpha(),
+                                  pygame.image.load('assets/idle_frame2_left.png').convert_alpha(),
+                                  pygame.image.load('assets/idle_frame3_left.png').convert_alpha()]
         self.gravity = 0
         self.infinity_frames = 30
         self.was_hit = False
@@ -36,6 +44,7 @@ class Player(pygame.sprite.Sprite):
         self.speed = 14
         self.walk_count = 0
         self.fly_count = 0
+        self.curr_idle_sprite = 0
         self.is_facing_right = False
         self.flying_right = [pygame.image.load('assets/flying_frame_character.png').convert_alpha(
         ), pygame.image.load('assets/flying_frame2_right.png').convert_alpha()]
@@ -50,6 +59,7 @@ class Player(pygame.sprite.Sprite):
         window.blit(character, character_rec)
 
     def move_player_right(self, key_list):
+        self.curr_idle_sprite = 0
         self.rect.left += self.speed
 
         if self.rect.y != 660 and key_list[pygame.K_SPACE] == 1:
@@ -81,6 +91,7 @@ class Player(pygame.sprite.Sprite):
             topleft=(self.rect.x, self.rect.y))
 
     def move_player_left(self, key_list):
+        self.curr_idle_sprite = 0
         self.rect.left -= self.speed
         if self.rect.y != 660 and key_list[pygame.K_SPACE] == 1:
 
@@ -109,6 +120,20 @@ class Player(pygame.sprite.Sprite):
             self.is_facing_right = False
         self.rect = self.character.get_rect(
             topleft=(self.rect.x, self.rect.y))
+    def update_idle_animation(self):
+        self.curr_idle_sprite += 0.01
+        if self.is_facing_right is True:
+            if self.curr_idle_sprite >= len(self.idle_sprites_right):
+                self.curr_idle_sprite = 0
+            self.character = self.idle_sprites_right[int(self.curr_idle_sprite)]
+        else:
+            if self.curr_idle_sprite >= len(self.idle_sprites_left):
+                self.curr_idle_sprite = 0
+            self.character = self.idle_sprites_left[int(self.curr_idle_sprite)]
+        self.rect = self.character.get_rect(
+            topleft=(self.rect.x, self.rect.y))
+
+
 
 class Player_proj(pygame.sprite.Sprite):
     def __init__(self, image, x, y):
@@ -403,6 +428,7 @@ def main():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 exit()
+
         # Change stage
         if player.rect.x > 1920:
             stage_count += 1
@@ -457,8 +483,6 @@ def main():
                 heart_container1.blit_image = False
 
         helpers.display_health(window, player.health_sprites3h, player.health_sprites4h, player.health, player.no_of_heart_crystals)
-
-
         key_list = pygame.key.get_pressed()
 
         if key_list[pygame.K_SPACE] == 1:
@@ -626,6 +650,8 @@ def main():
                 topleft=(enemy2_projectile_x, 200))
             if enemy2_projectile_x < -250:
                 enemy2_proj.shoot = False
+        if key_list[pygame.K_d] == 0 and key_list[pygame.K_a] == 0 and key_list[pygame.K_SPACE] == 0:
+            player.update_idle_animation()
         pygame.display.update()
         clock.tick(60)
 

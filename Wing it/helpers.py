@@ -197,6 +197,7 @@ def display_health(window, health_sprites, health_sprites4h,  health, no_of_hear
             window.blit(health_sprites4h[4 - health], (-210, -170))
 
 def player_jump(player, key_list):
+    player.curr_idle_sprite = 0
     if player.check_anim is False:
         if key_list[pygame.K_SPACE] == 1 and player.is_facing_right is True:
             player.character = player.flying_right[0]
@@ -266,4 +267,3 @@ def check_for_slime_collission(player, enemy):
     else:
         player.was_hit = False
     return player
-
