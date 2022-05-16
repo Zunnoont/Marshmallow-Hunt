@@ -123,6 +123,13 @@ def draw_forest2(window, character, character_rec, night_background, night_grass
     window.blit(tree1, (1020, 340))
     window.blit(character, character_rec)
 
+def draw_stage3(window, character, character_rec, night_background, grass, pillar, heart_container):
+    window.blit(night_background, (0, 0))
+    window.blit(grass, (0, 800))
+    window.blit(pillar, (700,445))
+    window.blit(character, character_rec)
+    if heart_container.blit_image is True:
+        window.blit(heart_container.image, heart_container.rect)
 
 def check_enemy1_range(character_y, stage_count):
 
@@ -181,14 +188,13 @@ def show_enemy2_hp(window, enemy_health, high_hp, low_hp):
     elif enemy_health == 1:
         window.blit(low_hp, (1230, -50))
 
-def display_health(window, character_healthfull_sprite, character_health2_hearts_sprite,
-                   character_Health1_heart_sprite, health):
-    if health == 3:
-        window.blit(character_healthfull_sprite, (-210, -170))
-    elif health == 2:
-        window.blit(character_health2_hearts_sprite, (-210, -170))
-    elif health == 1:
-        window.blit(character_Health1_heart_sprite, (-210, -170))
+def display_health(window, health_sprites, health_sprites4h,  health, no_of_heart_containers):
+    if no_of_heart_containers == 0:
+        if health > 0:
+            window.blit(health_sprites[3 - health], (-210, -170))
+    else:
+        if health > 0:
+            window.blit(health_sprites4h[4 - health], (-210, -170))
 
 def player_jump(player, key_list):
     if player.check_anim is False:

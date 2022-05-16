@@ -1,7 +1,7 @@
 import math
 import pygame
 import helpers
-import data_store
+import storage
 
 pygame.init()
 clock = pygame.time.Clock()
@@ -19,9 +19,15 @@ class Player(pygame.sprite.Sprite):
         self.rect = self.character.get_rect(topleft=(character_x, character_y))
         self.mask = pygame.mask.from_surface(self.character)
         self.health = 3
-        self.healthfull = pygame.image.load('assets/health_full.png')
-        self.health2_hearts = pygame.image.load('assets/health_2hearts.png')
-        self.health1_heart= pygame.image.load('assets/health_1heart.png')
+        self.no_of_heart_crystals = 0
+        self.health_sprites3h = [pygame.image.load('assets/health_full.png').convert_alpha(),
+                                 pygame.image.load('assets/health_2hearts.png').convert_alpha(),
+                                 pygame.image.load('assets/health_1heart.png').convert_alpha()]
+
+        self.health_sprites4h = [pygame.image.load('assets/health_4hearts.png').convert_alpha(),
+                                 pygame.image.load('assets/4hp_3_hearts.png').convert_alpha(),
+                                 pygame.image.load('assets/4hp_2_hearts.png').convert_alpha(),
+                                 pygame.image.load('assets/4hp_1_heart.png').convert_alpha()]
         self.gravity = 0
         self.infinity_frames = 30
         self.was_hit = False
@@ -103,9 +109,6 @@ class Player(pygame.sprite.Sprite):
             self.is_facing_right = False
         self.rect = self.character.get_rect(
             topleft=(self.rect.x, self.rect.y))
-
-
-
 
 class Player_proj(pygame.sprite.Sprite):
     def __init__(self, image, x, y):
@@ -303,6 +306,24 @@ class Large_slime(pygame.sprite.Sprite):
 
         self.rect = self.image.get_rect(topleft= (self.rect.x, self.rect.y))
 
+class Heart_container(pygame.sprite.Sprite):
+    def __init__(self, x_pos, y_pos):
+        self.sprites = []
+        self.sprites.append(pygame.image.load('assets/heart_container_frame2.png').convert_alpha())
+        self.sprites.append(pygame.image.load('assets/heart_container_frame1.png').convert_alpha())
+        self.sprites.append(pygame.image.load('assets/heart_container_frame3.png').convert_alpha())
+        self.curr_sprite = 0
+        self.image = self.sprites[self.curr_sprite]
+        self.blit_image = True
+        self.rect = self.rect = self.image.get_rect(topleft=(x_pos, y_pos))
+        self.mask = pygame.mask.from_surface(self.image)
+
+    def update(self):
+        self.curr_sprite += 0.1
+        if self.curr_sprite >= len(self.sprites):
+            self.curr_sprite = 0
+        self.image = self.sprites[int(self.curr_sprite)]
+
 # Main function of Wing It!
 def main():
     # Pygame Window
@@ -324,6 +345,8 @@ def main():
     night_background = pygame.image.load('assets/night_sky_starry.png').convert()
     night_grass = pygame.image.load('assets/night_grass_updated.png').convert()
     tree1 = pygame.image.load('assets/tree1.png').convert_alpha()
+    stage3_grass =  pygame.image.load('assets/autumn_grass_first.png').convert_alpha()
+    pillar = pygame.image.load('assets/pillar.png').convert_alpha()
 
     # Game fonts
     font = pygame.font.Font('slkscr.ttf', 50)
@@ -359,6 +382,8 @@ def main():
 
     large_slime = Large_slime(1200)
 
+    heart_container1  = Heart_container(485, 60)
+
 
     # weapon_particle
     weapon = pygame.image.load('assets/particle_effect.png').convert_alpha()
@@ -370,7 +395,7 @@ def main():
     run_program = True
     isabel_interaction = 0
 
-    stage_count = 2
+    stage_count = 0
 
     # Program game loop
     while run_program is True:
@@ -422,9 +447,17 @@ def main():
                 window.blit(large_slime.image, large_slime.rect)
                 large_slime.move_jumping_slime_purple()
                 player = helpers.check_for_slime_collission(player, large_slime)
+        elif stage_count == 3:
+            helpers.draw_stage3(window, player.character, player.rect, night_background, stage3_grass, pillar, heart_container1)
+            heart_container1.update()
+            heart_offset = (heart_container1.rect.x - player.rect.x), (heart_container1.rect.y - player.rect.y)
+            if player.mask.overlap(heart_container1.mask, heart_offset):
+                player.health = 4
+                player.no_of_heart_crystals += 1
+                heart_container1.blit_image = False
 
-        helpers.display_health(window, player.healthfull, player.health2_hearts,
-                   player.health1_heart, player.health)
+        helpers.display_health(window, player.health_sprites3h, player.health_sprites4h, player.health, player.no_of_heart_crystals)
+
 
         key_list = pygame.key.get_pressed()
 
