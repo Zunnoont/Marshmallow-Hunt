@@ -93,13 +93,10 @@ def isabel_speech(window, isabel_interaction, position_x, position_y):
     else:
         draw_speech(window, speech[index], position_x-25, position_y+10, 25, (255, 97, 3))
 
-def draw_screen(window, background, grass, character_x, side_1_x, side_1_right, side_1_right_rec, side_1, side_1_rec, character, character_rec, text):
+def draw_screen(window, background, grass, side_1, side_1_rec, character, character_rec, text):
     window.blit(background, (0, 0))
     window.blit(grass, (0, 800))
-    if character_x > side_1_x:
-        window.blit(side_1_right, side_1_right_rec)
-    else:
-        window.blit(side_1, side_1_rec)
+    window.blit(side_1, side_1_rec)
     window.blit(character, character_rec)
     window.blit(text, (800, 0))
 

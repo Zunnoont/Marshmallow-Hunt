@@ -149,16 +149,48 @@ class Player_proj(pygame.sprite.Sprite):
         self.mask = pygame.mask.from_surface(self.image)
         self.blit_weapon = False
 
+class Isabel(pygame.sprite.Sprite):
+    def __init__(self):
+        self.image = pygame.image.load('assets/Isabel_Idle1.png').convert_alpha()
+        self.rect = self.image.get_rect(topleft=(1100, 665))
+        self.curr_sprite = 0
+        self.sprites_left = [pygame.image.load('assets/Isabel_Idle1.png').convert_alpha(),
+                             pygame.image.load('assets/isabel_idle2_left.png').convert_alpha()]
+        self.sprites_right = [pygame.image.load('assets/Isabel_Idle1_right.png').convert_alpha(),
+                              pygame.image.load('assets/isabel_idle2_right.png').convert_alpha()]
+    def update(self, player_x):
+        self.curr_sprite += 0.05
+        if player_x > self.rect.x:
+            if self.curr_sprite >= len(self.sprites_right):
+                self.curr_sprite = 0
+            self.image = self.sprites_right[int(self.curr_sprite)]
+        else:
+            if self.curr_sprite >= len(self.sprites_left):
+                self.curr_sprite = 0
+            self.image = self.sprites_left[int(self.curr_sprite)]
+
+
+
 
 class Enemy1(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
         self.image = pygame.image.load('assets/enemy1_large_left.png').convert_alpha()
+        self.sprites = [pygame.image.load('assets/enemy1_large_left.png').convert_alpha(),
+                        pygame.image.load('assets/enemy1_large_left_frame2.png').convert_alpha()]
+        self.curr_sprite = 0
         self.rect = self.image.get_rect(topleft=(1100, 440))
         self.mask = pygame.mask.from_surface(self.image)
         self.health = 4
         self.was_hit = False
         self.is_dead = False
+
+    def update(self):
+        self.curr_sprite += 0.02
+        if self.curr_sprite >= len(self.sprites):
+            self.curr_sprite = 0
+        self.image = self.sprites[int(self.curr_sprite)]
+
 
 
 class Enemy1_proj(pygame.sprite.Sprite):
@@ -378,10 +410,9 @@ def main():
     text = font.render('Wing it!', False, 'White')
 
     # Side character_1
+    isabel = Isabel()
     side_1 = pygame.image.load('assets/Isabel_Idle1.png').convert_alpha()
     side_1_rec = side_1.get_rect(topleft=(1100, 665))
-    side_1_right = pygame.image.load('assets/Isabel_Idle1_right.png').convert_alpha()
-    side_1_right_rec = side_1_right.get_rect(topleft=(1050, 665))
 
     # Enemy 1
     enemy1 = Enemy1()
@@ -438,9 +469,9 @@ def main():
             player.rect.x = 1900
 
         if stage_count == 0:
-            helpers.draw_screen(window, background, grass, player.rect.x, side_1_rec.x, side_1_right,
-                        side_1_right_rec, side_1, side_1_rec, player.character, player.rect,
+            helpers.draw_screen(window, background, grass, isabel.image, isabel.rect, player.character, player.rect,
                         text)
+            isabel.update(player.rect.x)
 
         elif stage_count == 1:
             helpers.draw_forest(window, player.character, player.rect, night_background,
@@ -450,6 +481,7 @@ def main():
                           enemy_medium_hp, enemy_low_hp)
 
             helpers.show_enemy2_hp(window, enemy2.health, enemy_high_hp, enemy_low_hp)
+            enemy1.update()
             if enemy2.is_dead is False:
                 window.blit(enemy2.image, enemy2.rect)
         elif stage_count == 2:
@@ -542,12 +574,15 @@ def main():
         isabel_proximity = helpers.calculate_isabel_proximity(player.rect.x, player.rect.y,
                                                       side_1_rec.x, side_1_rec.y)
 
+        if key_list[pygame.K_d] == 0 and key_list[pygame.K_a] == 0 and key_list[pygame.K_SPACE] == 0:
+            player.update_idle_animation()
+
         if isabel_proximity is True and stage_count == 0:
             if key_list[pygame.K_RIGHT] == 1:
                 isabel_interaction += 100
 
             helpers.isabel_speech(window, isabel_interaction,
-                          side_1_rec.x, side_1_rec.y)
+                          isabel.rect.x, isabel.rect.y)
             if isabel_interaction in range(1300, 1400):
                 # Character has gotten the staff
                 # and can now use it
@@ -564,6 +599,7 @@ def main():
 
             if (isabel_interaction // 100) < len(speech):
                 isabel_interaction += 1
+
 
         # Projectile acceleration
         player_proj.speed = helpers.projectile_acceleration(player_proj.speed, 1.01)
@@ -650,8 +686,6 @@ def main():
                 topleft=(enemy2_projectile_x, 200))
             if enemy2_projectile_x < -250:
                 enemy2_proj.shoot = False
-        if key_list[pygame.K_d] == 0 and key_list[pygame.K_a] == 0 and key_list[pygame.K_SPACE] == 0:
-            player.update_idle_animation()
         pygame.display.update()
         clock.tick(60)
 
