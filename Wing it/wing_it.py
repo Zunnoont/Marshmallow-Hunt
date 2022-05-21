@@ -363,6 +363,31 @@ class Large_slime(pygame.sprite.Sprite):
 
         self.rect = self.image.get_rect(topleft= (self.rect.x, self.rect.y))
 
+class Wizard1(pygame.sprite.Sprite):
+    def __init__(self, x_pos, y_pos):
+        self.sprites_right = []
+        self.sprites_left = []
+        self.sprites_left.append(pygame.image.load('assets/wizard_left.png').convert_alpha())
+        self.sprites_left.append(pygame.image.load('assets/wizard_left_frame2.png').convert_alpha())
+        self.sprites_right.append(pygame.image.load('assets/wizard_right.png').convert_alpha())
+        self.sprites_right.append(pygame.image.load('assets/wizard_right_frame2.png').convert_alpha())
+        self.curr_sprite = 0
+        self.image = self.sprites_left[self.curr_sprite]
+        self.blit_image = True
+        self.rect = self.rect = self.image.get_rect(topleft=(x_pos, y_pos))
+        self.mask = pygame.mask.from_surface(self.image)
+    def update(self, player_x):
+        self.curr_sprite += 0.025
+        if player_x > self.rect.x:
+            if self.curr_sprite >= len(self.sprites_right):
+                self.curr_sprite = 0
+            self.image = self.sprites_right[int(self.curr_sprite)]
+        else:
+            if self.curr_sprite >= len(self.sprites_left):
+                self.curr_sprite = 0
+            self.image = self.sprites_left[int(self.curr_sprite)]
+
+
 class Heart_container(pygame.sprite.Sprite):
     def __init__(self, x_pos, y_pos):
         self.sprites = []
@@ -433,6 +458,7 @@ def main():
     enemy3 = Enemy3(1040)
     enemy4 = Enemy4(1040)
     enemy5 = Enemy5(1040)
+    wizard1 = Wizard1(650, 670)
 
     # Large slime miniboss
 
@@ -451,7 +477,7 @@ def main():
     run_program = True
     isabel_interaction = 0
 
-    stage_count = 0
+    stage_count = 4
 
     # Program game loop
     while run_program is True:
@@ -513,6 +539,10 @@ def main():
                 player.health = 4
                 player.no_of_heart_crystals += 1
                 heart_container1.blit_image = False
+        elif stage_count == 4:
+            helpers.draw_stage4(window, player.character, player.rect, night_background, night_grass)
+            window.blit(wizard1.image, wizard1.rect)
+            wizard1.update(player.rect.x)
 
         helpers.display_health(window, player.health_sprites3h, player.health_sprites4h, player.health, player.no_of_heart_crystals)
         key_list = pygame.key.get_pressed()

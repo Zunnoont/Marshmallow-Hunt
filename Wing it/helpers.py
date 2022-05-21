@@ -128,6 +128,11 @@ def draw_stage3(window, character, character_rec, night_background, grass, pilla
     if heart_container.blit_image is True:
         window.blit(heart_container.image, heart_container.rect)
 
+def draw_stage4(window, character, character_rec, night_background, grass):
+    window.blit(night_background, (0, 0))
+    window.blit(grass, (0, 800))
+    window.blit(character, character_rec)
+
 def check_enemy1_range(character_y, stage_count):
 
     if character_y == 660 and stage_count == 1:
