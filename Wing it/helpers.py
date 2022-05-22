@@ -269,3 +269,30 @@ def check_for_slime_collission(player, enemy):
     else:
         player.was_hit = False
     return player
+
+def get_speech_wizard():
+    speech = []
+    speech.append('Your kind shouldn\'t be here')
+    speech.append('Leave the forest or they will find you')
+    speech.append('You wont recieve another warning...')
+
+    return speech
+# Draw text into the game
+def draw_speech_wizard(screen, text, position_x, position_y, text_size, color, speech_count):
+    '''
+    <Draws text onto to screen at a given position>
+
+    Arguments:
+        <screen>  - The pygame window
+        <text>  - A string containing a message
+        <position_x>  - x position of the text
+        <position_y>  - y position of the text
+        <text_size>  - Size of the test
+        <position_x>  - Color of the text
+    '''
+    #
+    index = speech_count // 100
+    if index >= len(text):
+        draw_speech(screen, text[-1], position_x, position_y, text_size, color)
+    else:
+        draw_speech(screen, text[index], position_x, position_y, text_size, color)

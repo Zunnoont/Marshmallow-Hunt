@@ -46,6 +46,7 @@ class Player(pygame.sprite.Sprite):
         self.fly_count = 0
         self.curr_idle_sprite = 0
         self.is_facing_right = False
+        self.in_bossfight = False
         self.flying_right = [pygame.image.load('assets/flying_frame_character.png').convert_alpha(
         ), pygame.image.load('assets/flying_frame2_right.png').convert_alpha()]
         self.flying_left = [pygame.image.load('assets/flying_frame_character_left.png').convert_alpha(
@@ -365,27 +366,42 @@ class Large_slime(pygame.sprite.Sprite):
 
 class Wizard1(pygame.sprite.Sprite):
     def __init__(self, x_pos, y_pos):
-        self.sprites_right = []
-        self.sprites_left = []
-        self.sprites_left.append(pygame.image.load('assets/wizard_left.png').convert_alpha())
-        self.sprites_left.append(pygame.image.load('assets/wizard_left_frame2.png').convert_alpha())
-        self.sprites_right.append(pygame.image.load('assets/wizard_right.png').convert_alpha())
-        self.sprites_right.append(pygame.image.load('assets/wizard_right_frame2.png').convert_alpha())
+        self.sprites_right = [pygame.image.load('assets/wizard_right.png').convert_alpha(),
+                              pygame.image.load('assets/wizard_right_frame2.png').convert_alpha()]
+        self.sprites_left = [pygame.image.load('assets/wizard_left.png').convert_alpha(),
+                             pygame.image.load('assets/wizard_left_frame2.png').convert_alpha()]
+        self.angry_sprites_left = [pygame.image.load('assets/angry_wiz_frame2_left.png').convert_alpha()]
+        self.angry_sprites_right = [pygame.image.load('assets/angry_wiz_frame2_right.png').convert_alpha(),
+                                    ]
         self.curr_sprite = 0
         self.image = self.sprites_left[self.curr_sprite]
         self.blit_image = True
+        self.in_bossfight = False
+        self.speech_count = 0
         self.rect = self.rect = self.image.get_rect(topleft=(x_pos, y_pos))
         self.mask = pygame.mask.from_surface(self.image)
     def update(self, player_x):
         self.curr_sprite += 0.025
-        if player_x > self.rect.x:
-            if self.curr_sprite >= len(self.sprites_right):
-                self.curr_sprite = 0
-            self.image = self.sprites_right[int(self.curr_sprite)]
+        if self.in_bossfight is False:
+
+            if player_x > self.rect.x:
+                if self.curr_sprite >= len(self.sprites_right):
+                    self.curr_sprite = 0
+                self.image = self.sprites_right[int(self.curr_sprite)]
+            else:
+                if self.curr_sprite >= len(self.sprites_left):
+                    self.curr_sprite = 0
+                self.image = self.sprites_left[int(self.curr_sprite)]
         else:
-            if self.curr_sprite >= len(self.sprites_left):
-                self.curr_sprite = 0
-            self.image = self.sprites_left[int(self.curr_sprite)]
+            if player_x > self.rect.x:
+                if self.curr_sprite >= len(self.angry_sprites_right):
+                    self.curr_sprite = 0
+                self.image = self.angry_sprites_right[int(self.curr_sprite)]
+            else:
+                if self.curr_sprite >= len(self.angry_sprites_left):
+                    self.curr_sprite = 0
+                self.image = self.angry_sprites_left[int(self.curr_sprite)]
+
 
 
 class Heart_container(pygame.sprite.Sprite):
@@ -477,7 +493,7 @@ def main():
     run_program = True
     isabel_interaction = 0
 
-    stage_count = 4
+    stage_count = 3
 
     # Program game loop
     while run_program is True:
@@ -487,10 +503,10 @@ def main():
                 exit()
 
         # Change stage
-        if player.rect.x > 1920:
+        if player.rect.x > 1920 and player.in_bossfight is False:
             stage_count += 1
             player.rect.x = -200
-        elif player.rect.x < -300:
+        elif player.rect.x < -300 and player.in_bossfight is False:
             stage_count -= 1
             player.rect.x = 1900
 
@@ -532,6 +548,18 @@ def main():
                 large_slime.move_jumping_slime_purple()
                 player = helpers.check_for_slime_collission(player, large_slime)
         elif stage_count == 3:
+            helpers.draw_stage4(window, player.character, player.rect, night_background, night_grass)
+            window.blit(wizard1.image, wizard1.rect)
+            wizard1.update(player.rect.x)
+            if player.rect.x == 1920:
+                player.in_bossfight = True
+                wizard1.in_bossfight = True
+                helpers.draw_speech_wizard(window, ['Very well, if you insist'], 770, 650, 25, 'red', wizard1.speech_count)
+            if helpers.calculate_isabel_proximity(player.rect.x, player.rect.y, wizard1.rect.x, wizard1.rect.y):
+                speech_wiz = helpers.get_speech_wizard()
+                helpers.draw_speech_wizard(window, speech_wiz, 770, 650, 25, 'red', wizard1.speech_count)
+                wizard1.speech_count += 1
+        elif stage_count == 4:
             helpers.draw_stage3(window, player.character, player.rect, night_background, stage3_grass, pillar, heart_container1)
             heart_container1.update()
             heart_offset = (heart_container1.rect.x - player.rect.x), (heart_container1.rect.y - player.rect.y)
@@ -539,10 +567,6 @@ def main():
                 player.health = 4
                 player.no_of_heart_crystals += 1
                 heart_container1.blit_image = False
-        elif stage_count == 4:
-            helpers.draw_stage4(window, player.character, player.rect, night_background, night_grass)
-            window.blit(wizard1.image, wizard1.rect)
-            wizard1.update(player.rect.x)
 
         helpers.display_health(window, player.health_sprites3h, player.health_sprites4h, player.health, player.no_of_heart_crystals)
         key_list = pygame.key.get_pressed()
