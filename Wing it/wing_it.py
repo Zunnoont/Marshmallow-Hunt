@@ -370,8 +370,10 @@ class Wizard1(pygame.sprite.Sprite):
                               pygame.image.load('assets/wizard_right_frame2.png').convert_alpha()]
         self.sprites_left = [pygame.image.load('assets/wizard_left.png').convert_alpha(),
                              pygame.image.load('assets/wizard_left_frame2.png').convert_alpha()]
-        self.angry_sprites_left = [pygame.image.load('assets/angry_wiz_frame2_left.png').convert_alpha()]
-        self.angry_sprites_right = [pygame.image.load('assets/angry_wiz_frame2_right.png').convert_alpha(),
+        self.angry_sprites_left = [pygame.image.load('assets/angry_wiz_frame2_left.png').convert_alpha(),
+                                   pygame.image.load('assets/wizard_f2_left.png').convert_alpha()]
+        self.angry_sprites_right = [pygame.image.load('assets/wizard_angry_f1_right.png').convert_alpha(),
+                                    pygame.image.load('assets/angry_wiz_frame2_right.png').convert_alpha()
                                     ]
         self.curr_sprite = 0
         self.image = self.sprites_left[self.curr_sprite]
@@ -493,7 +495,7 @@ def main():
     run_program = True
     isabel_interaction = 0
 
-    stage_count = 3
+    stage_count = 0
 
     # Program game loop
     while run_program is True:
@@ -551,7 +553,7 @@ def main():
             helpers.draw_stage4(window, player.character, player.rect, night_background, night_grass)
             window.blit(wizard1.image, wizard1.rect)
             wizard1.update(player.rect.x)
-            if player.rect.x == 1920:
+            if player.rect.x > 1900:
                 player.in_bossfight = True
                 wizard1.in_bossfight = True
                 helpers.draw_speech_wizard(window, ['Very well, if you insist'], 770, 650, 25, 'red', wizard1.speech_count)
