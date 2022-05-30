@@ -1,6 +1,6 @@
 # Wing-it
 
-This project is a pixel-art side scroller developed in python using the module pygame. It takes elements from historical side-scrollers such as Super Mario Bros with a twist of being able to fly!
+This project is a pixel-art side scroller developed in python using the module pygame. It takes elements from historical side-scrollers such as Super Mario Bros with a twist of being able to fly! All art and assets created by myself
 
 # Controls
 
