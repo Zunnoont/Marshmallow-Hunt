@@ -1,4 +1,5 @@
 import math
+from re import L
 import pygame
 import helpers
 import storage
@@ -13,7 +14,7 @@ class Player(pygame.sprite.Sprite):
         self.character_left = pygame.image.load(
         'assets/character_standing_left.png').convert_alpha()
         self.character_right = pygame.image.load(
-        'assets/characted_standing.png').convert_alpha()
+        'assets/main_char.png').convert_alpha()
         self.got_item = pygame.image.load(
                     'assets/obtained_staff.png').convert_alpha()
         self.rect = self.character.get_rect(topleft=(character_x, character_y))
@@ -29,13 +30,12 @@ class Player(pygame.sprite.Sprite):
                                  pygame.image.load('assets/4hp_2_hearts.png').convert_alpha(),
                                  pygame.image.load('assets/4hp_1_heart.png').convert_alpha()]
         self.idle_sprites_right = [pygame.image.load(
-        'assets/characted_standing.png').convert_alpha(),
-                                   pygame.image.load('assets/idle_frame2_right.png').convert_alpha(),
-                                   pygame.image.load('assets/idle_frame3_right.png').convert_alpha()]
+        'assets/main_char.png').convert_alpha(),
+                                   pygame.image.load('assets/idle_frame1_main.png').convert_alpha(),
+                                   ]
         self.idle_sprites_left = [pygame.image.load(
-        'assets/character_standing_left.png').convert_alpha(),
-                                  pygame.image.load('assets/idle_frame2_left.png').convert_alpha(),
-                                  pygame.image.load('assets/idle_frame3_left.png').convert_alpha()]
+        'assets/main_char_left.png').convert_alpha(),
+                                  pygame.image.load('assets/idle_frame1_main_left.png').convert_alpha()]
         self.gravity = 0
         self.infinity_frames = 30
         self.was_hit = False
@@ -52,9 +52,20 @@ class Player(pygame.sprite.Sprite):
         self.flying_left = [pygame.image.load('assets/flying_frame_character_left.png').convert_alpha(
         ), pygame.image.load('assets/flying_frame2_left.png').convert_alpha()]
         self.walk_cycle_right = [pygame.image.load(
-        'assets/walk_frame1.png'), pygame.image.load('assets/walking_frame2right.png')]
+        'assets/mc_walk_f1.png'),
+        pygame.image.load('assets/main_walk_f2.png').convert_alpha(),
+        pygame.image.load('assets/mc_walk_f3.png').convert_alpha(),
+        pygame.image.load('assets/walk_f4.png').convert_alpha(),
+        pygame.image.load('assets/walk_f5.png').convert_alpha(),
+        pygame.image.load('assets/main_char.png').convert_alpha()
+        ]
         self.walk_cycle_left = [pygame.image.load(
-        'assets/walk_frame1_left.png'), pygame.image.load('assets/walking_frame2left.png')]
+        'assets/mc_walk_f1_left.png').convert_alpha(),
+        pygame.image.load('assets/main_walk_f2_left.png').convert_alpha(),
+        pygame.image.load('assets/mc_walk_f3_left.png').convert_alpha(),
+        pygame.image.load('assets/walk_f4_left.png').convert_alpha(),
+        pygame.image.load('assets/walk_f5_left.png').convert_alpha()
+        ]
 
     def update(window, character, character_rec):
         window.blit(character, character_rec)
@@ -63,7 +74,7 @@ class Player(pygame.sprite.Sprite):
         self.curr_idle_sprite = 0
         self.rect.left += self.speed
 
-        if self.rect.y != 660 and key_list[pygame.K_SPACE] == 1:
+        if self.rect.y != 620 and key_list[pygame.K_SPACE] == 1:
             self.character = self.flying_right[0]
             if (self.fly_count) > 1:
                 self.fly_count == 0
@@ -74,17 +85,17 @@ class Player(pygame.sprite.Sprite):
                 self.fly_count = 0
             self.fly_count += 0.075
             self.is_facing_right = True
-        elif self.rect.y != 660 and key_list[pygame.K_SPACE] != 1:
+        elif self.rect.y != 620 and key_list[pygame.K_SPACE] != 1:
             self.character = self.flying_right[0]
             self.is_facing_right = True
         else:
-            if (self.walk_count) > 1:
+            if (self.walk_count) > 4:
                 self.walk_count == 0
-            if self.walk_count < 2:
+            if self.walk_count < 5:
                 self.character = self.walk_cycle_right[math.floor(self.walk_count)]
             else:
                 self.walk_count = 0
-            self.walk_count += 0.1
+            self.walk_count += 0.2
 
             self.is_facing_right = True
 
@@ -94,7 +105,7 @@ class Player(pygame.sprite.Sprite):
     def move_player_left(self, key_list):
         self.curr_idle_sprite = 0
         self.rect.left -= self.speed
-        if self.rect.y != 660 and key_list[pygame.K_SPACE] == 1:
+        if self.rect.y != 620 and key_list[pygame.K_SPACE] == 1:
 
             self.character = self.flying_left[0]
             if (self.fly_count) > 1:
@@ -106,23 +117,23 @@ class Player(pygame.sprite.Sprite):
                 self.fly_count = 0
             self.fly_count += 0.075
             self.is_facing_right = False
-        elif self.rect.y != 660 and key_list[pygame.K_SPACE] != 1:
+        elif self.rect.y != 620 and key_list[pygame.K_SPACE] != 1:
             self.character = self.flying_left[0]
             self.is_facing_right = False
         else:
-            if (self.walk_count) > 1:
+            if (self.walk_count) > 4:
                 self.walk_count == 0
-            if self.walk_count < 2:
+            if self.walk_count < 5:
                 self.character = self.walk_cycle_left[math.floor(self.walk_count)]
             else:
                 self.walk_count = 0
-            self.walk_count += 0.1
+            self.walk_count += 0.2
 
             self.is_facing_right = False
         self.rect = self.character.get_rect(
             topleft=(self.rect.x, self.rect.y))
     def update_idle_animation(self):
-        self.curr_idle_sprite += 0.01
+        self.curr_idle_sprite += 0.03
         if self.is_facing_right is True:
             if self.curr_idle_sprite >= len(self.idle_sprites_right):
                 self.curr_idle_sprite = 0
@@ -152,20 +163,24 @@ class Player_proj(pygame.sprite.Sprite):
 
 class Isabel(pygame.sprite.Sprite):
     def __init__(self):
-        self.image = pygame.image.load('assets/Isabel_Idle1.png').convert_alpha()
-        self.rect = self.image.get_rect(topleft=(1100, 665))
+        self.image = pygame.image.load('assets/Isabel_final_idle1.png').convert_alpha()
+        self.rect = self.image.get_rect(topleft=(1100, 627))
         self.curr_sprite = 0
-        self.sprites_left = [pygame.image.load('assets/Isabel_Idle1.png').convert_alpha(),
-                             pygame.image.load('assets/isabel_idle2_left.png').convert_alpha()]
-        self.sprites_right = [pygame.image.load('assets/Isabel_Idle1_right.png').convert_alpha(),
-                              pygame.image.load('assets/isabel_idle2_right.png').convert_alpha()]
+        self.pressed_enter = False
+        self.facing_left = True
+        self.sprites_left = [pygame.image.load('assets/isabel_final_idle_fr1_left.png').convert_alpha(),
+                             pygame.image.load('assets/isabel_final_idle_fr2_left.png').convert_alpha()]
+        self.sprites_right = [pygame.image.load('assets/isabel_final_idle_fr1.png').convert_alpha(),
+                              pygame.image.load('assets/isabel_final_idle_fr2.png').convert_alpha()]
     def update(self, player_x):
-        self.curr_sprite += 0.05
+        self.curr_sprite += 0.025
         if player_x > self.rect.x:
+            self.facing_left = False
             if self.curr_sprite >= len(self.sprites_right):
                 self.curr_sprite = 0
             self.image = self.sprites_right[int(self.curr_sprite)]
         else:
+            self.facing_left = True
             if self.curr_sprite >= len(self.sprites_left):
                 self.curr_sprite = 0
             self.image = self.sprites_left[int(self.curr_sprite)]
@@ -424,11 +439,28 @@ class Heart_container(pygame.sprite.Sprite):
             self.curr_sprite = 0
         self.image = self.sprites[int(self.curr_sprite)]
 
+class Campfire(pygame.sprite.Sprite):
+    def __init__(self):
+        self.campfire_sprites = [pygame.image.load('assets/Campfire/campfire_v1.png').convert_alpha(),
+                pygame.image.load('assets/Campfire/campfire_v2.png').convert_alpha(),
+                pygame.image.load('assets/Campfire/campfire_v3.png').convert_alpha()]
+        self.curr_sprite = 0
+        self.image = self.campfire_sprites[self.curr_sprite]
+
+    def update(self):
+        self.curr_sprite += 0.1
+        if self.curr_sprite >= len(self.campfire_sprites):
+            self.curr_sprite = 0
+        self.image = self.campfire_sprites[int(self.curr_sprite)]
+
+
+
+
 # Main function of Wing It!
 def main():
     # Pygame Window
     x_position = 100
-    y_position = 660
+    y_position = 620
     window = pygame.display.set_mode((1920, 1060))
     window.fill(('White'))
 
@@ -436,17 +468,22 @@ def main():
     pygame.display.set_caption('Wing It!')
 
     # Character Sprites
-    character = pygame.image.load('assets/characted_standing.png').convert_alpha()
+    character = pygame.image.load('assets/main_char.png').convert_alpha()
     player = Player(character, x_position, y_position)
 
     # Backgrounds
-    grass = pygame.image.load('assets/resize_background_2.png').convert()
-    background = pygame.image.load('assets/background_sky.png').convert()
-    night_background = pygame.image.load('assets/night_sky_starry.png').convert()
-    night_grass = pygame.image.load('assets/night_grass_updated.png').convert()
+    grass = pygame.image.load('assets/grass_v1.png').convert()
+    background = pygame.image.load('assets/night_sky_V1.png').convert()
+    night_background = pygame.image.load('assets/night_sky_V1.png').convert()
+    night_grass = pygame.image.load('assets/grass_v1.png').convert()
     tree1 = pygame.image.load('assets/tree1.png').convert_alpha()
     stage3_grass =  pygame.image.load('assets/autumn_grass_first.png').convert_alpha()
     pillar = pygame.image.load('assets/pillar.png').convert_alpha()
+    rock = pygame.image.load('assets/rock.png').convert_alpha()
+    tree2 = pygame.image.load('assets/tree2.png').convert_alpha()
+    text_box = pygame.image.load('assets/text_box_npc.png').convert_alpha()
+    campfire = Campfire()
+    tree_stump = pygame.image.load('assets/tree_stump.png').convert_alpha()
 
     # Game fonts
     font = pygame.font.Font('slkscr.ttf', 50)
@@ -512,11 +549,12 @@ def main():
             stage_count -= 1
             player.rect.x = 1900
 
+        # Stages
         if stage_count == 0:
             helpers.draw_screen(window, background, grass, isabel.image, isabel.rect, player.character, player.rect,
-                        text)
+                        text, rock, tree2, campfire.image, tree_stump   )
             isabel.update(player.rect.x)
-
+            campfire.update()
         elif stage_count == 1:
             helpers.draw_forest(window, player.character, player.rect, night_background,
                         night_grass, tree1, enemy1.image, enemy1.rect, enemy1.is_dead)
@@ -577,10 +615,10 @@ def main():
             player.gravity = -20
 
         # Check idle position of character
-        if key_list[pygame.K_a] != 1 and key_list[pygame.K_d] != 1 and player.is_facing_right is True and player.rect.y == 660:
+        if key_list[pygame.K_a] != 1 and key_list[pygame.K_d] != 1 and player.is_facing_right is True and player.rect.y == 620:
             player.character = player.character_right
 
-        elif key_list[pygame.K_a] != 1 and key_list[pygame.K_d] != 1 and player.is_facing_right is False and player.rect.y == 660:
+        elif key_list[pygame.K_a] != 1 and key_list[pygame.K_d] != 1 and player.is_facing_right is False and player.rect.y == 620:
             player.character = player.character_left
 
         # WEAPON MECHANICS
@@ -605,9 +643,9 @@ def main():
         player.rect.y += player.gravity
 
         # Check if character has clipped into ground
-        if player.rect.y > 660:
+        if player.rect.y > 620:
            # if main_char
-            player.rect.y = 660
+            player.rect.y = 620
 
             if player.is_facing_right is False and key_list[pygame.K_a] != 1 and key_list[pygame.K_d] != 1:
                 player.character = player.character_left
@@ -617,7 +655,7 @@ def main():
                 topleft=(player.rect.x, player.rect.y))
 
         # Jumping Mechanic
-        if player.rect.y != 660:
+        if player.rect.y != 620:
             helpers.player_jump(player, key_list)
 
         # Movement Right
@@ -633,12 +671,15 @@ def main():
         if key_list[pygame.K_d] == 0 and key_list[pygame.K_a] == 0 and key_list[pygame.K_SPACE] == 0:
             player.update_idle_animation()
 
-        if isabel_proximity is True and stage_count == 0:
+        if key_list[pygame.K_t] == 1:
+            isabel.pressed_enter = True
+
+        if isabel_proximity is True and stage_count == 0 and isabel.pressed_enter is True:
             if key_list[pygame.K_RIGHT] == 1:
                 isabel_interaction += 100
 
             helpers.isabel_speech(window, isabel_interaction,
-                          isabel.rect.x, isabel.rect.y)
+                          isabel.rect.x, isabel.rect.y, text_box)
             if isabel_interaction in range(1300, 1400):
                 # Character has gotten the staff
                 # and can now use it
@@ -655,6 +696,11 @@ def main():
 
             if (isabel_interaction // 100) < len(speech):
                 isabel_interaction += 1
+        elif isabel_proximity is True and isabel.pressed_enter is False and stage_count == 0:
+            if isabel.facing_left is True:
+                helpers.draw_speech(window, "Press [T] to talk", 1265, 827, 20, 'white')
+            else:
+                helpers.draw_speech(window, "Press [T] to talk", 1150, 827, 20, 'white')
 
 
         # Projectile acceleration
@@ -710,7 +756,7 @@ def main():
                 topleft=(enemy1_projectile_x, 1000))
 
             x_offset = player.rect[0] - enemy1_proj.rect[0]
-            if player.mask.overlap(enemy1_proj.mask, (x_offset, 0)) != None and player.rect.y == 660:
+            if player.mask.overlap(enemy1_proj.mask, (x_offset, 0)) != None and player.rect.y == 620:
                 if player.was_hit is False:
                     player.health -= 1
                     player.was_hit = True
