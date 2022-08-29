@@ -2,7 +2,6 @@ import math
 from re import L
 import pygame
 import helpers
-import storage
 
 pygame.init()
 clock = pygame.time.Clock()
