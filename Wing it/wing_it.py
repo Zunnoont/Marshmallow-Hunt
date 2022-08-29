@@ -1,170 +1,40 @@
 import math
+from multiprocessing.reduction import send_handle
 from re import L
 import pygame
 import helpers
+import storage
+from player import Player, Player_proj
+from enemies import Enemy1, Enemy1_proj, Enemy2, Enemy2_proj, Enemy3, Enemy4, Enemy5, EnemyArcher, EnemyArcher_Projectile, Large_slime, Wizard1
 
 pygame.init()
 clock = pygame.time.Clock()
-
-class Player(pygame.sprite.Sprite):
-    def __init__(self, character, character_x, character_y):
-        super().__init__()
-        self.character = character
-        self.character_left = pygame.image.load(
-        'assets/character_standing_left.png').convert_alpha()
-        self.character_right = pygame.image.load(
-        'assets/main_char.png').convert_alpha()
-        self.got_item = pygame.image.load(
-                    'assets/obtained_staff.png').convert_alpha()
-        self.rect = self.character.get_rect(topleft=(character_x, character_y))
-        self.mask = pygame.mask.from_surface(self.character)
-        self.health = 3
-        self.no_of_heart_crystals = 0
-        self.health_sprites3h = [pygame.image.load('assets/health_full.png').convert_alpha(),
-                                 pygame.image.load('assets/health_2hearts.png').convert_alpha(),
-                                 pygame.image.load('assets/health_1heart.png').convert_alpha()]
-
-        self.health_sprites4h = [pygame.image.load('assets/health_4hearts.png').convert_alpha(),
-                                 pygame.image.load('assets/4hp_3_hearts.png').convert_alpha(),
-                                 pygame.image.load('assets/4hp_2_hearts.png').convert_alpha(),
-                                 pygame.image.load('assets/4hp_1_heart.png').convert_alpha()]
-        self.idle_sprites_right = [pygame.image.load(
-        'assets/main_char.png').convert_alpha(),
-                                   pygame.image.load('assets/idle_frame1_main.png').convert_alpha(),
-                                   ]
-        self.idle_sprites_left = [pygame.image.load(
-        'assets/main_char_left.png').convert_alpha(),
-                                  pygame.image.load('assets/idle_frame1_main_left.png').convert_alpha()]
-        self.gravity = 0
-        self.infinity_frames = 30
-        self.was_hit = False
-        self.got_staff = False
-        self.check_anim = True
-        self.speed = 14
-        self.walk_count = 0
-        self.fly_count = 0
-        self.curr_idle_sprite = 0
-        self.is_facing_right = False
-        self.in_bossfight = False
-        self.flying_right = [pygame.image.load('assets/flying_frame_character.png').convert_alpha(
-        ), pygame.image.load('assets/flying_frame2_right.png').convert_alpha()]
-        self.flying_left = [pygame.image.load('assets/flying_frame_character_left.png').convert_alpha(
-        ), pygame.image.load('assets/flying_frame2_left.png').convert_alpha()]
-        self.walk_cycle_right = [pygame.image.load(
-        'assets/mc_walk_f1.png'),
-        pygame.image.load('assets/main_walk_f2.png').convert_alpha(),
-        pygame.image.load('assets/mc_walk_f3.png').convert_alpha(),
-        pygame.image.load('assets/walk_f4.png').convert_alpha(),
-        pygame.image.load('assets/walk_f5.png').convert_alpha(),
-        pygame.image.load('assets/main_char.png').convert_alpha()
-        ]
-        self.walk_cycle_left = [pygame.image.load(
-        'assets/mc_walk_f1_left.png').convert_alpha(),
-        pygame.image.load('assets/main_walk_f2_left.png').convert_alpha(),
-        pygame.image.load('assets/mc_walk_f3_left.png').convert_alpha(),
-        pygame.image.load('assets/walk_f4_left.png').convert_alpha(),
-        pygame.image.load('assets/walk_f5_left.png').convert_alpha()
-        ]
-
-    def update(window, character, character_rec):
-        window.blit(character, character_rec)
-
-    def move_player_right(self, key_list):
-        self.curr_idle_sprite = 0
-        self.rect.left += self.speed
-
-        if self.rect.y != 620 and key_list[pygame.K_SPACE] == 1:
-            self.character = self.flying_right[0]
-            if (self.fly_count) > 1:
-                self.fly_count == 0
-            if self.fly_count < 2:
-                self.character = self.flying_right[math.floor(
-                self.fly_count)]
-            else:
-                self.fly_count = 0
-            self.fly_count += 0.075
-            self.is_facing_right = True
-        elif self.rect.y != 620 and key_list[pygame.K_SPACE] != 1:
-            self.character = self.flying_right[0]
-            self.is_facing_right = True
+class Title(pygame.sprite.Sprite):
+    def __init__(self):
+        self.logo_frames = [pygame.image.load('assets/Logo_Frames/logo1.png').convert_alpha(),
+                            pygame.image.load('assets/Logo_Frames/logo2.png').convert_alpha(),
+                            pygame.image.load('assets/Logo_Frames/logo3.png').convert_alpha(),
+                            pygame.image.load('assets/Logo_Frames/logo4.png').convert_alpha(),
+                            pygame.image.load('assets/Logo_Frames/logo5.png').convert_alpha()]
+        self.image = self.logo_frames[0]
+        self.curr_frame = 0
+        self.start_game = False
+    def title_animation(self):
+        if self.curr_frame >= 5:
+            self.curr_frame = 0
         else:
-            if (self.walk_count) > 4:
-                self.walk_count == 0
-            if self.walk_count < 5:
-                self.character = self.walk_cycle_right[math.floor(self.walk_count)]
-            else:
-                self.walk_count = 0
-            self.walk_count += 0.2
-
-            self.is_facing_right = True
-
-        self.rect = self.character.get_rect(
-            topleft=(self.rect.x, self.rect.y))
-
-    def move_player_left(self, key_list):
-        self.curr_idle_sprite = 0
-        self.rect.left -= self.speed
-        if self.rect.y != 620 and key_list[pygame.K_SPACE] == 1:
-
-            self.character = self.flying_left[0]
-            if (self.fly_count) > 1:
-                self.fly_count == 0
-            if self.fly_count < 2:
-                self.character = self.flying_left[math.floor(
-                self.fly_count)]
-            else:
-                self.fly_count = 0
-            self.fly_count += 0.075
-            self.is_facing_right = False
-        elif self.rect.y != 620 and key_list[pygame.K_SPACE] != 1:
-            self.character = self.flying_left[0]
-            self.is_facing_right = False
-        else:
-            if (self.walk_count) > 4:
-                self.walk_count == 0
-            if self.walk_count < 5:
-                self.character = self.walk_cycle_left[math.floor(self.walk_count)]
-            else:
-                self.walk_count = 0
-            self.walk_count += 0.2
-
-            self.is_facing_right = False
-        self.rect = self.character.get_rect(
-            topleft=(self.rect.x, self.rect.y))
-    def update_idle_animation(self):
-        self.curr_idle_sprite += 0.03
-        if self.is_facing_right is True:
-            if self.curr_idle_sprite >= len(self.idle_sprites_right):
-                self.curr_idle_sprite = 0
-            self.character = self.idle_sprites_right[int(self.curr_idle_sprite)]
-        else:
-            if self.curr_idle_sprite >= len(self.idle_sprites_left):
-                self.curr_idle_sprite = 0
-            self.character = self.idle_sprites_left[int(self.curr_idle_sprite)]
-        self.rect = self.character.get_rect(
-            topleft=(self.rect.x, self.rect.y))
-
-
-
-class Player_proj(pygame.sprite.Sprite):
-    def __init__(self, image, x, y):
-        super().__init__()
-        self.image = image
-        self.image_left = pygame.image.load(
-                    'assets/particle_effect_left.png').convert_alpha()
-        self.image_right = pygame.image.load(
-                    'assets/particle_effect.png').convert_alpha()
-        self.rect = self.image.get_rect(topleft=(x, y))
-        self.speed = 20
-        self.direction = False
-        self.mask = pygame.mask.from_surface(self.image)
-        self.blit_weapon = False
+            self.image = self.logo_frames[math.floor(self.curr_frame)]
+        self.curr_frame += 0.09
 
 class Isabel(pygame.sprite.Sprite):
     def __init__(self):
         self.image = pygame.image.load('assets/Isabel_final_idle1.png').convert_alpha()
         self.rect = self.image.get_rect(topleft=(1100, 627))
         self.curr_sprite = 0
+        self.x_range = 300
+        self.x_proximity = 1080
+        self.interaction = 0
+        self.near_player = False
         self.pressed_enter = False
         self.facing_left = True
         self.sprites_left = [pygame.image.load('assets/isabel_final_idle_fr1_left.png').convert_alpha(),
@@ -183,242 +53,29 @@ class Isabel(pygame.sprite.Sprite):
             if self.curr_sprite >= len(self.sprites_left):
                 self.curr_sprite = 0
             self.image = self.sprites_left[int(self.curr_sprite)]
-
-
-
-
-class Enemy1(pygame.sprite.Sprite):
-    def __init__(self):
-        super().__init__()
-        self.image = pygame.image.load('assets/enemy1_large_left.png').convert_alpha()
-        self.sprites = [pygame.image.load('assets/enemy1_large_left.png').convert_alpha(),
-                        pygame.image.load('assets/enemy1_large_left_frame2.png').convert_alpha()]
-        self.curr_sprite = 0
-        self.rect = self.image.get_rect(topleft=(1100, 440))
-        self.mask = pygame.mask.from_surface(self.image)
-        self.health = 4
-        self.was_hit = False
-        self.is_dead = False
-
-    def update(self):
-        self.curr_sprite += 0.02
-        if self.curr_sprite >= len(self.sprites):
-            self.curr_sprite = 0
-        self.image = self.sprites[int(self.curr_sprite)]
-
-
-
-class Enemy1_proj(pygame.sprite.Sprite):
-    def __init__(self, x_position):
-        super().__init__()
-        self.image = pygame.image.load(
-            'assets/dagger_projectile_left.png').convert_alpha()
-        self.rect = self.image.get_rect(topleft=(x_position, 1000))
-        self.speed = 20
-        self.shoot = False
-        self.mask = pygame.mask.from_surface(self.image)
-
-
-class Enemy2(pygame.sprite.Sprite):
-    def __init__(self):
-        super().__init__()
-        self.image = pygame.image.load(
-            'assets/enemy2_flying_left.png').convert_alpha()
-        self.rect = self.image.get_rect(topleft=(1100, 100))
-        self.mask = pygame.mask.from_surface(self.image)
-        self.health = 3
-        self.was_hit = False
-        self.is_dead = False
-
-
-class Enemy2_proj(pygame.sprite.Sprite):
-    def __init__(self, x_position):
-        super().__init__()
-        self.image = pygame.image.load('assets/e2_proj.png').convert_alpha()
-        self.rect = self.image.get_rect(topleft=(x_position, 200))
-        self.speed = 20
-        self.shoot = False
-        self.mask = pygame.mask.from_surface(self.image)
-
-
-class Enemy3(pygame.sprite.Sprite):
-    def __init__(self, x_position):
-        super().__init__()
-        self.image = pygame.image.load('assets/slime_left.png').convert_alpha()
-        self.jumping_image = pygame.image.load(
-            'assets/slime_left_jumping.png').convert_alpha()
-        self.standing = pygame.image.load('assets/slime_left.png').convert_alpha()
-        self.rect = self.image.get_rect(topleft=(x_position, 555))
-        self.speed = 20
-        self.falling = False
-        self.is_offscreen = False
-        self.mask = pygame.mask.from_surface(self.image)
-
-    def move_jumping_slime(self):
-        self.rect.x -= 10
-        if self.rect.y == 555 and self.falling is False:
-            self.rect.y -= 10
-        if self.rect.y != 555 and self.falling is False:
-            self.rect.y -= 10
-            self.image = self.jumping_image
-        elif self.rect.y != 555 and self.falling is True:
-            self.rect.y += 10
-            self.image = self.standing
-        if self.rect.y == 255:
-            self.falling = True
-        elif self.rect.y == 555:
-            self.falling = False
-            self.image = self.standing
-
-        if self.rect.x < -200:
-            self.is_offscreen = True
-
-        self.rect = self.image.get_rect(topleft= (self.rect.x, self.rect.y))
-
-
-class Enemy4(pygame.sprite.Sprite):
-    def __init__(self, x_position):
-        super().__init__()
-        self.image = pygame.image.load('assets/green_slime_idle.png').convert_alpha()
-        self.jumping_image = pygame.image.load(
-            'assets/green_slime_jump.png').convert_alpha()
-        self.standing = pygame.image.load('assets/green_slime_idle.png').convert_alpha()
-        self.rect = self.image.get_rect(topleft=(x_position, 555))
-        self.speed = 23
-        self.falling = False
-        self.is_offscreen = False
-        self.mask = pygame.mask.from_surface(self.image)
-
-    def move_jumping_slime_green(self):
-        self.rect.x -= 15
-        if self.rect.y == 555 and self.falling is False:
-            self.rect.y -= 15
-        if self.rect.y != 555 and self.falling is False:
-            self.rect.y -= 15
-            self.image = self.jumping_image
-        elif self.rect.y != 555 and self.falling is True:
-            self.rect.y += 15
-            self.image = self.standing
-        if self.rect.y == 255:
-            self.falling = True
-        elif self.rect.y == 555:
-            self.falling = False
-            self.image = self.standing
-
-        if self.rect.x < -200:
-            self.is_offscreen = True
-
-        self.rect = self.image.get_rect(topleft= (self.rect.x, self.rect.y))
-
-class Enemy5(pygame.sprite.Sprite):
-    def __init__(self, x_position):
-        super().__init__()
-        self.image = pygame.image.load('assets/red_slime_idle.png').convert_alpha()
-        self.jumping_image = pygame.image.load(
-            'assets/red_slime_jump.png').convert_alpha()
-        self.standing = pygame.image.load('assets/red_slime_idle.png').convert_alpha()
-        self.rect = self.image.get_rect(topleft=(x_position, 555))
-        self.speed = 20
-        self.falling = False
-        self.is_offscreen = False
-        self.mask = pygame.mask.from_surface(self.image)
-
-    def move_jumping_slime_red(self):
-        self.rect.x -= 20
-        if self.rect.y == 555 and self.falling is False:
-            self.rect.y -= 20
-        if self.rect.y != 555 and self.falling is False:
-            self.rect.y -= 20
-            self.image = self.jumping_image
-        elif self.rect.y != 555 and self.falling is True:
-            self.rect.y += 20
-            self.image = self.standing
-        if self.rect.y == 255:
-            self.falling = True
-        elif self.rect.y == 555:
-            self.falling = False
-            self.image = self.standing
-
-        if self.rect.x < -200:
-            self.is_offscreen = True
-
-        self.rect = self.image.get_rect(topleft= (self.rect.x, self.rect.y))
-
-class Large_slime(pygame.sprite.Sprite):
-    def __init__(self, x_position):
-        super().__init__()
-        self.image = pygame.image.load('assets/large_slime_idle.png').convert_alpha()
-        self.jumping_image = pygame.image.load(
-            'assets/large_slime.png').convert_alpha()
-        self.standing = pygame.image.load('assets/large_slime_idle.png').convert_alpha()
-        self.rect = self.image.get_rect(topleft=(x_position, 255))
-        self.speed = 20
-        self.falling = False
-        self.is_offscreen = False
-        self.mask = pygame.mask.from_surface(self.image)
-
-    def move_jumping_slime_purple(self):
-        self.rect.x -= 20
-        if self.rect.y == 555 and self.falling is False:
-            self.rect.y -= 5
-        if self.rect.y != 555 and self.falling is False:
-            self.rect.y -= 5
-            self.image = self.jumping_image
-        elif self.rect.y != 555 and self.falling is True:
-            self.rect.y += 5
-            self.image = self.standing
-        if self.rect.y == 255:
-            self.falling = True
-        elif self.rect.y == 555:
-            self.falling = False
-            self.image = self.standing
-
-        if self.rect.x < -200:
-            self.is_offscreen = True
-
-        self.rect = self.image.get_rect(topleft= (self.rect.x, self.rect.y))
-
-class Wizard1(pygame.sprite.Sprite):
-    def __init__(self, x_pos, y_pos):
-        self.sprites_right = [pygame.image.load('assets/wizard_right.png').convert_alpha(),
-                              pygame.image.load('assets/wizard_right_frame2.png').convert_alpha()]
-        self.sprites_left = [pygame.image.load('assets/wizard_left.png').convert_alpha(),
-                             pygame.image.load('assets/wizard_left_frame2.png').convert_alpha()]
-        self.angry_sprites_left = [pygame.image.load('assets/angry_wiz_frame2_left.png').convert_alpha(),
-                                   pygame.image.load('assets/wizard_f2_left.png').convert_alpha()]
-        self.angry_sprites_right = [pygame.image.load('assets/wizard_angry_f1_right.png').convert_alpha(),
-                                    pygame.image.load('assets/angry_wiz_frame2_right.png').convert_alpha()
-                                    ]
-        self.curr_sprite = 0
-        self.image = self.sprites_left[self.curr_sprite]
-        self.blit_image = True
-        self.in_bossfight = False
-        self.speech_count = 0
-        self.rect = self.rect = self.image.get_rect(topleft=(x_pos, y_pos))
-        self.mask = pygame.mask.from_surface(self.image)
-    def update(self, player_x):
-        self.curr_sprite += 0.025
-        if self.in_bossfight is False:
-
-            if player_x > self.rect.x:
-                if self.curr_sprite >= len(self.sprites_right):
-                    self.curr_sprite = 0
-                self.image = self.sprites_right[int(self.curr_sprite)]
-            else:
-                if self.curr_sprite >= len(self.sprites_left):
-                    self.curr_sprite = 0
-                self.image = self.sprites_left[int(self.curr_sprite)]
+    def check_if_near_player(self, character_x, is_player_in_air):
+        if character_x > self.rect.x:
+            self.x_proximity = character_x - self.rect.x
         else:
-            if player_x > self.rect.x:
-                if self.curr_sprite >= len(self.angry_sprites_right):
-                    self.curr_sprite = 0
-                self.image = self.angry_sprites_right[int(self.curr_sprite)]
+            self.x_proximity = self.rect.x - character_x
+        if self.x_proximity <= self.x_range and is_player_in_air is False:
+            self.near_player = True
+        else:
+            self.near_player = False
+    def talk_to_isabel(self, window, stage_count, key_list, text_box):
+        if self.near_player is True and stage_count == 0 and self.pressed_enter is True:
+            if key_list[pygame.K_RIGHT] == 1:
+                self.interaction += 100
+            helpers.isabel_speech(window, self.interaction,
+                          self.rect.x, self.rect.y, text_box)
+            speech = helpers.get_speech()
+            if (self.interaction // 100) < len(speech):
+                self.interaction += 1
+        elif self.near_player is True and self.pressed_enter is False and stage_count == 0:
+            if self.facing_left is True:
+                helpers.draw_speech(window, "Press [T] to talk", 1265, 827, 20, 'white')
             else:
-                if self.curr_sprite >= len(self.angry_sprites_left):
-                    self.curr_sprite = 0
-                self.image = self.angry_sprites_left[int(self.curr_sprite)]
-
-
+                helpers.draw_speech(window, "Press [T] to talk", 1150, 827, 20, 'white')
 
 class Heart_container(pygame.sprite.Sprite):
     def __init__(self, x_pos, y_pos):
@@ -452,25 +109,23 @@ class Campfire(pygame.sprite.Sprite):
             self.curr_sprite = 0
         self.image = self.campfire_sprites[int(self.curr_sprite)]
 
-
-
-
 # Main function of Wing It!
 def main():
     # Pygame Window
-    x_position = 100
-    y_position = 620
+    x_position = -20
+    y_position = 588
     window = pygame.display.set_mode((1920, 1060))
     window.fill(('White'))
 
     # Game name
-    pygame.display.set_caption('Wing It!')
+    pygame.display.set_caption('Marshmallow Hunt')
 
     # Character Sprites
-    character = pygame.image.load('assets/main_char.png').convert_alpha()
+    character = pygame.image.load('assets/main_sitting_f1.png').convert_alpha()
     player = Player(character, x_position, y_position)
 
     # Backgrounds
+    title = Title()
     grass = pygame.image.load('assets/grass_v1.png').convert()
     background = pygame.image.load('assets/night_sky_V1.png').convert()
     night_background = pygame.image.load('assets/night_sky_V1.png').convert()
@@ -484,14 +139,8 @@ def main():
     campfire = Campfire()
     tree_stump = pygame.image.load('assets/tree_stump.png').convert_alpha()
 
-    # Game fonts
-    font = pygame.font.Font('slkscr.ttf', 50)
-    text = font.render('Wing it!', False, 'White')
-
     # Side character_1
     isabel = Isabel()
-    side_1 = pygame.image.load('assets/Isabel_Idle1.png').convert_alpha()
-    side_1_rec = side_1.get_rect(topleft=(1100, 665))
 
     # Enemy 1
     enemy1 = Enemy1()
@@ -500,8 +149,8 @@ def main():
     # Enemy 1's projectile
     enemy1_proj = Enemy1_proj(enemy1_projectile_x)
 
-    enemy_high_hp = pygame.image.load('assets/healthbar_high.png')
-    enemy_medium_hp = pygame.image.load('assets/healthbar_medium.png')
+    enemy_high_hp = pygame.image.load('assets/healthbar_high.png').convert_alpha()
+    enemy_medium_hp = pygame.image.load('assets/healthbar_medium.png').convert_alpha()
     enemy_low_hp = pygame.image.load('assets/healthbar_low.png').convert_alpha()
     # Enemy 2:
     enemy2 = Enemy2()
@@ -514,12 +163,14 @@ def main():
     enemy5 = Enemy5(1040)
     wizard1 = Wizard1(650, 670)
 
+    #Enemy archer:
+    archer = EnemyArcher()
+    archer_arrow = EnemyArcher_Projectile()
     # Large slime miniboss
 
     large_slime = Large_slime(1200)
 
     heart_container1  = Heart_container(485, 60)
-
 
     # weapon_particle
     weapon = pygame.image.load('assets/particle_effect.png').convert_alpha()
@@ -529,16 +180,16 @@ def main():
     player_proj = Player_proj(weapon, weapon_x, weapon_y)
 
     run_program = True
-    isabel_interaction = 0
-
     stage_count = 0
-
     # Program game loop
     while run_program is True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 exit()
+
+        # List of keys pressed by user
+        key_list = pygame.key.get_pressed()
 
         # Change stage
         if player.rect.x > 1920 and player.in_bossfight is False:
@@ -549,22 +200,56 @@ def main():
             player.rect.x = 1900
 
         # Stages
-        if stage_count == 0:
+        if title.start_game is False:
+            player.health = -1
+            key_list = pygame.key.get_pressed()
             helpers.draw_screen(window, background, grass, isabel.image, isabel.rect, player.character, player.rect,
-                        text, rock, tree2, campfire.image, tree_stump   )
-            isabel.update(player.rect.x)
+                        rock, tree2, campfire.image, tree_stump)
             campfire.update()
+            isabel.update(player.rect.x)
+            player.update_idle_animation()
+            window.blit(title.image, (420, -150))
+            title.title_animation()
+
+            # If key_list contains 1, a key was pressed
+            # as 1 represents pressed while 0 represents
+            # not pressed
+            if 1 in key_list:
+                title.start_game = True
+                player.health = 3
+
+        elif stage_count == 0:
+            helpers.draw_screen(window, background, grass, isabel.image, isabel.rect, player.character, player.rect,
+                        rock, tree2, campfire.image, tree_stump)
+            isabel.update(player.rect.x)
+            is_near_stump = helpers.check_if_near_stump(window, player)
+            if is_near_stump is True and key_list[pygame.K_s] == 1:
+                player.is_sitting = True
+                player.rect.x = -20
+                player.rect.y = 588
+            campfire.update()
+            isabel.check_if_near_player(player.rect.x, player.in_air)
+            if key_list[pygame.K_t] == 1 and isabel.near_player is True:
+                isabel.pressed_enter = True
         elif stage_count == 1:
             helpers.draw_forest(window, player.character, player.rect, night_background,
-                        night_grass, tree1, enemy1.image, enemy1.rect, enemy1.is_dead)
+                        night_grass, tree1, enemy1.image, enemy1.rect, enemy1.is_dead, archer)
 
             helpers.show_enemy_hp(window, enemy1.health, enemy_high_hp,
                           enemy_medium_hp, enemy_low_hp)
 
             helpers.show_enemy2_hp(window, enemy2.health, enemy_high_hp, enemy_low_hp)
+
             enemy1.update()
             if enemy2.is_dead is False:
                 window.blit(enemy2.image, enemy2.rect)
+            if archer.is_alive is True and enemy1.is_dead is True:
+                archer.idle_anim()
+                archer.update_infinity_frames()
+                archer.show_hp(window, enemy_high_hp, enemy_medium_hp, enemy_low_hp)
+                if player.in_air is False:
+                    archer.attack_anim()
+
         elif stage_count == 2:
             player.rect = player.character.get_rect(
                 topleft=(player.rect.x, player.rect.y))
@@ -608,99 +293,46 @@ def main():
                 heart_container1.blit_image = False
 
         helpers.display_health(window, player.health_sprites3h, player.health_sprites4h, player.health, player.no_of_heart_crystals)
-        key_list = pygame.key.get_pressed()
 
-        if key_list[pygame.K_SPACE] == 1:
-            player.gravity = -20
+        if key_list[pygame.K_SPACE] == 1 and player.is_sitting is False:
+            player.in_air = True
+        if player.in_air is True:
+            player.player_jump()
 
         # Check idle position of character
-        if key_list[pygame.K_a] != 1 and key_list[pygame.K_d] != 1 and player.is_facing_right is True and player.rect.y == 620:
-            player.character = player.character_right
+        player.update_direction_facing(key_list)
 
-        elif key_list[pygame.K_a] != 1 and key_list[pygame.K_d] != 1 and player.is_facing_right is False and player.rect.y == 620:
-            player.character = player.character_left
+        if enemy1.infinity_frames > 0:
+            enemy1.infinity_frames -= 1
 
-        # WEAPON MECHANICS
-        # Shoot weapon
-        if key_list[pygame.K_f] == 1:
-            if player.is_facing_right is False:
-                player_proj.direction = False
-            else:
-                player_proj.direction = True
-            player_proj.blit_weapon = True
-            weapon_x = player.rect.x
-            weapon_y = player.rect.y
-            if player.is_facing_right is False:
-                player_proj.image = player_proj.image_left
-            else:
-                player_proj.image = player_proj.image_right
-
-            player_proj.rect = player_proj.image.get_rect(
-                topleft=(weapon_x, weapon_y))
-            player_proj.speed = 20
-
-        player.rect.y += player.gravity
-
-        # Check if character has clipped into ground
-        if player.rect.y > 620:
-           # if main_char
-            player.rect.y = 620
-
-            if player.is_facing_right is False and key_list[pygame.K_a] != 1 and key_list[pygame.K_d] != 1:
-                player.character = player.character_left
-            elif player.is_facing_right is True and key_list[pygame.K_a] != 1 and key_list[pygame.K_d] != 1:
-                player.character = player.character_right
+        #Check if player has hit enemies
+        if player.attacking is True:
+            player.attack()
             player.rect = player.character.get_rect(
                 topleft=(player.rect.x, player.rect.y))
+            enemy1.check_if_hit(player, stage_count)
+            archer.check_if_hit(player, stage_count)
 
-        # Jumping Mechanic
-        if player.rect.y != 620:
-            helpers.player_jump(player, key_list)
+        # WEAPON MECHANICS
+        # Check if attacking
+        if key_list[pygame.K_f] == 1 and title.start_game is True:
+            player.attacking = True
+
+        # Check if character has clipped into ground
+        player.check_if_clipped_into_ground(key_list)
 
         # Movement Right
-        if key_list[pygame.K_d] == 1:
+        if key_list[pygame.K_d] == 1 and title.start_game is True:
             player.move_player_right(key_list)
         # Movement Left
-        elif key_list[pygame.K_a] == 1:
+        elif key_list[pygame.K_a] == 1 and title.start_game is True:
             player.move_player_left(key_list)
-
-        isabel_proximity = helpers.calculate_isabel_proximity(player.rect.x, player.rect.y,
-                                                      side_1_rec.x, side_1_rec.y)
-
-        if key_list[pygame.K_d] == 0 and key_list[pygame.K_a] == 0 and key_list[pygame.K_SPACE] == 0:
+        # Update player idle animation if not moving
+        if key_list[pygame.K_d] == 0 and key_list[pygame.K_a] == 0 and key_list[pygame.K_SPACE] == 0 and player.in_air is False and player.attacking is False:
             player.update_idle_animation()
 
-        if key_list[pygame.K_t] == 1:
-            isabel.pressed_enter = True
-
-        if isabel_proximity is True and stage_count == 0 and isabel.pressed_enter is True:
-            if key_list[pygame.K_RIGHT] == 1:
-                isabel_interaction += 100
-
-            helpers.isabel_speech(window, isabel_interaction,
-                          isabel.rect.x, isabel.rect.y, text_box)
-            if isabel_interaction in range(1300, 1400):
-                # Character has gotten the staff
-                # and can now use it
-                player.got_staff = True
-                player.character = player.got_item
-                player.rect = player.character.get_rect(
-                    topleft=(player.rect.x, player.rect.y))
-
-            elif isabel_interaction in range(1400, 1500):
-                player.character = player.character_right
-                player.rect = player.character.get_rect(
-                    topleft=(player.rect.x, player.rect.y))
-            speech = helpers.get_speech()
-
-            if (isabel_interaction // 100) < len(speech):
-                isabel_interaction += 1
-        elif isabel_proximity is True and isabel.pressed_enter is False and stage_count == 0:
-            if isabel.facing_left is True:
-                helpers.draw_speech(window, "Press [T] to talk", 1265, 827, 20, 'white')
-            else:
-                helpers.draw_speech(window, "Press [T] to talk", 1150, 827, 20, 'white')
-
+        # If player has initialised dialogue, talk to NPC Isabel
+        isabel.talk_to_isabel(window, stage_count, key_list, text_box)
 
         # Projectile acceleration
         player_proj.speed = helpers.projectile_acceleration(player_proj.speed, 1.01)
@@ -710,37 +342,9 @@ def main():
             player_proj.direction, weapon_x, player_proj.speed)
 
         # Replay dialogue interaction
-        if isabel_proximity is True and key_list[pygame.K_RETURN] == 1:
-            isabel_interaction = 0
+        if isabel.near_player is True and key_list[pygame.K_RETURN] == 1:
+            isabel.interaction = 0
 
-        # Shoot weapon
-        if player_proj.blit_weapon is True and player.got_staff is True:
-            player_proj.rect = player_proj.image.get_rect(
-                topleft=(weapon_x, weapon_y))
-            window.blit(player_proj.image, player_proj.rect)
-
-            offset = (enemy1.rect.x -
-                      player_proj.rect.x), (enemy1.rect.y - player_proj.rect.y)
-            enemy2_offset = (
-                enemy2.rect.x - player_proj.rect.x), (enemy2.rect.y - player_proj.rect.y)
-            if player_proj.mask.overlap(enemy1.mask, (offset)) != None and stage_count == 1:
-
-                if enemy1.was_hit is False:
-                    enemy1.health -= 1
-                    enemy1.was_hit = True
-                    if enemy1.health == 0:
-                        enemy1.is_dead = True
-            else:
-                enemy1.was_hit = False
-
-            if player_proj.mask.overlap(enemy2.mask, enemy2_offset) != None:
-                if enemy2.was_hit is False:
-                    enemy2.health -= 1
-                    enemy2.was_hit = True
-                    if enemy2.health == 0:
-                        enemy2.is_dead = True
-            else:
-                enemy2.was_hit = False
         shoot_enemy_weap = helpers.check_enemy1_range(player.rect.y, stage_count)
         shoot_enemy2_weap = helpers.check_enemy2_range(player.rect.y, stage_count)
 
@@ -759,7 +363,6 @@ def main():
                 if player.was_hit is False:
                     player.health -= 1
                     player.was_hit = True
-
             else:
                 player.was_hit = False
             enemy1_projectile_x = helpers.draw_enemy1_proj(window, enemy1_proj.image, enemy1_proj.rect, enemy1_projectile_x,
@@ -768,18 +371,11 @@ def main():
                 topleft=(enemy1_projectile_x, 1000))
             if enemy1_projectile_x < -250:
                 enemy1_proj.shoot = False
-        if enemy2_proj.shoot is True and enemy2.is_dead is False and stage_count == 1:
 
+        if enemy2_proj.shoot is True and enemy2.is_dead is False and stage_count == 1:
             enemy2_proj.rect = enemy2_proj.image.get_rect(
                 topleft=(enemy2_projectile_x, 200))
-            e2_x_offset = player.rect.x - enemy2_proj.rect.x
-            e2_y_offset = player.rect.y - enemy2_proj.rect.y
-            if player.mask.overlap(enemy2_proj.mask, (e2_x_offset, e2_y_offset)) != None:
-                if player.was_hit is False:
-                    player.health -= 1
-                    player.was_hit = True
-            else:
-                player.was_hit = False
+            player.check_if_hit_by_enemy2(enemy2_proj.rect.x, enemy2_proj.rect.y, enemy2_proj.mask)
 
             enemy2_projectile_x = helpers.draw_enemy2_proj(
                 window, enemy2_proj.image, enemy2_proj.rect, enemy2_projectile_x, enemy2_proj.speed)
@@ -787,9 +383,14 @@ def main():
                 topleft=(enemy2_projectile_x, 200))
             if enemy2_projectile_x < -250:
                 enemy2_proj.shoot = False
+
+        #Shoot archer arrow
+        archer_arrow.check_if_shoot(archer.curr_attack_sprite)
+        if archer_arrow.shoot is True and archer.is_alive is True and stage_count == 1 and enemy1.is_dead is True:
+            player.check_if_hit_by_archer(archer_arrow.rect.x, archer_arrow.rect.y, archer_arrow.mask)
+            archer_arrow.shoot_arrow(window)
         pygame.display.update()
         clock.tick(60)
-
 
 if __name__ == "__main__":
     main()
