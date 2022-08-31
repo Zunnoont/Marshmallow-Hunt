@@ -24,5 +24,6 @@ A pygame window should pop up, meaning you have successfully run the program
 
 # Screenshots
 
-![Screen Shot 2022-05-28 at 1 26 19 pm](https://user-images.githubusercontent.com/78951403/170950093-c0cf0710-0a8b-4396-a07b-eb8e7f19eb59.png)
+![Screen Shot 2022-08-31 at 2 48 57 pm](https://user-images.githubusercontent.com/78951403/187594961-2a5884fb-117d-4d02-81b0-adafebe1805d.png)
+
 
